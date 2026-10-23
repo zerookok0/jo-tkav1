@@ -1,22 +1,25 @@
 import { useId } from 'react'
-import { APP_ICON_URL, APP_NAME } from '../data/site'
+import { useConfig } from '../config/store'
+import { safeImageUrl } from '../lib/format'
 
 type IconProps = {
   className?: string
 }
 
-/**
- * 应用图标占位。把真实图标链接填到 src/data/site.ts 里的
- * APP_ICON_URL，这里会自动换成图片。
- */
+/** 应用图标：控制台填了链接就显示图片，否则显示占位 */
 export function AppIcon({ className = 'h-14 w-14' }: IconProps) {
+  const { config } = useConfig()
   const id = useId()
+  const src = safeImageUrl(config.brand.iconUrl)
+  const name = config.brand.name.trim()
 
-  if (APP_ICON_URL) {
+  if (src) {
     return (
       <img
-        src={APP_ICON_URL}
-        alt={APP_NAME || '应用图标'}
+        src={src}
+        alt={name || '应用图标'}
+        loading="lazy"
+        decoding="async"
         className={`${className} rounded-2xl object-cover ring-1 ring-white/15`}
       />
     )
@@ -26,13 +29,13 @@ export function AppIcon({ className = 'h-14 w-14' }: IconProps) {
     <div
       className={`${className} relative grid place-items-center overflow-hidden rounded-2xl border border-dashed border-white/25 bg-white/[0.04]`}
       role="img"
-      aria-label="应用图标占位"
+      aria-label={name ? `${name} 图标` : '应用图标占位'}
     >
       <svg viewBox="0 0 48 48" className="h-1/2 w-1/2 text-white/35" aria-hidden="true">
         <defs>
           <linearGradient id={`ic-${id}`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#8B5CF6" />
-            <stop offset="100%" stopColor="#F472B6" />
+            <stop offset="0%" stopColor="var(--c-wine)" />
+            <stop offset="100%" stopColor="var(--c-blush)" />
           </linearGradient>
         </defs>
         <rect
@@ -52,20 +55,36 @@ export function AppIcon({ className = 'h-14 w-14' }: IconProps) {
   )
 }
 
-/**
- * 应用名称。把名字填到 src/data/site.ts 里的 APP_NAME。
- */
+/** 应用名称 */
 export function AppName({ className = '' }: IconProps) {
-  if (APP_NAME) {
-    return <span className={`font-semibold tracking-tight ${className}`}>{APP_NAME}</span>
+  const { config } = useConfig()
+  const name = config.brand.name.trim()
+
+  if (name) {
+    return <span className={`font-semibold tracking-tight ${className}`}>{name}</span>
   }
   return (
     <span
       className={`inline-flex items-center rounded-full border border-dashed border-white/25 bg-white/[0.03] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-white/45 ${className}`}
-      title="在 src/data/site.ts 里填入 APP_NAME"
+      title="在控制台的「品牌」里填入应用名称"
     >
       应用名称
     </span>
+  )
+}
+
+/** 名字 + 副标题的组合 */
+export function BrandText({ nameClass = 'text-[13px]' }: { nameClass?: string }) {
+  const { config } = useConfig()
+  return (
+    <div className="leading-none">
+      <AppName className={nameClass} />
+      {config.brand.tagline && (
+        <p className="mt-1 text-[9.5px] font-medium uppercase tracking-[0.24em] text-white/30">
+          {config.brand.tagline}
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -74,12 +93,7 @@ export function Wordmark() {
   return (
     <div className="flex items-center gap-2.5">
       <AppIcon className="h-9 w-9" />
-      <div className="leading-none">
-        <AppName className="text-[13px]" />
-        <p className="mt-1 text-[9.5px] font-medium uppercase tracking-[0.24em] text-white/30">
-          附近短视频
-        </p>
-      </div>
+      <BrandText nameClass="text-[13px]" />
     </div>
   )
 }

@@ -13,22 +13,24 @@ import {
   VolumeX,
   X,
 } from 'lucide-react'
-import { VIDEOS, formatCount, formatDistance, type VideoItem } from '../data/videos'
-import { GATE_COPY, type GateAction } from '../data/site'
 import { AppIcon, AppName } from './BrandSlot'
-
-const TABS = ['附近', '关注', '推荐'] as const
+import { useConfig } from '../config/store'
+import type { GateKey } from '../config/defaults'
+import { formatCount, formatDistance, safeImageUrl } from '../lib/format'
+import type { VideoItem } from '../config/videos'
 
 type Props = {
   /** 点手机里的点赞/评论等 → 打开拦截弹窗 */
-  onGate: (a: GateAction) => void
+  onGate: (a: GateKey) => void
 }
 
 export function PhoneMockup({ onGate }: Props) {
+  const { config } = useConfig()
+  const videos = config.videos
   const scrollerRef = useRef<HTMLDivElement | null>(null)
   const [index, setIndex] = useState(0)
   const [muted, setMuted] = useState(true)
-  const [gate, setGate] = useState<GateAction | null>(null)
+  const [gate, setGate] = useState<GateKey | null>(null)
   const [burst, setBurst] = useState(false)
   const lastTap = useRef(0)
 
@@ -51,7 +53,7 @@ export function PhoneMockup({ onGate }: Props) {
     lastTap.current = now
   }, [])
 
-  const current = VIDEOS[index]
+  const current = videos[Math.min(index, Math.max(videos.length - 1, 0))]
 
   return (
     <div className="relative mx-auto w-full max-w-[420px]">
@@ -111,27 +113,32 @@ export function PhoneMockup({ onGate }: Props) {
                 aria-label="短视频预览，可上下滑动切换"
                 className="hide-scrollbar snap-y-mandatory absolute inset-0 overflow-y-auto overscroll-contain"
               >
-                {VIDEOS.map((item, i) => (
-                  <FeedCard
-                    key={item.id}
-                    item={item}
-                    index={i}
-                    active={i === index}
-                    muted={muted}
-                    onToggleMute={() => setMuted((m) => !m)}
-                    onGate={setGate}
-                  />
-                ))}
+                {videos.length === 0 ? (
+                  <EmptyFeed />
+                ) : (
+                  videos.map((item, i) => (
+                    <FeedCard
+                      key={item.id}
+                      item={item}
+                      index={i}
+                      active={i === index}
+                      muted={muted}
+                      badge18={config.hero.badge18}
+                      onToggleMute={() => setMuted((m) => !m)}
+                      onGate={setGate}
+                    />
+                  ))
+                )}
 
-                {/* 结尾卡：滑到这里就结束 */}
+                {/* 结尾卡 */}
                 <EndCard onDownload={() => onGate('default')} />
               </div>
 
               {/* 顶部标签栏 */}
               <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-center gap-5 pt-9">
-                {TABS.map((tab, i) => (
+                {config.hero.tabs.map((tab, i) => (
                   <span
-                    key={tab}
+                    key={`${tab}-${i}`}
                     className={`relative text-[13px] transition ${
                       i === 0 ? 'font-semibold text-white' : 'font-medium text-white/55'
                     }`}
@@ -152,13 +159,14 @@ export function PhoneMockup({ onGate }: Props) {
               >
                 <ChevronUp className="h-4 w-4 animate-float text-white/80" />
                 <span className="rounded-full bg-black/45 px-2.5 py-1 text-[10px] tracking-wide text-white/80 backdrop-blur">
-                  上下滑动切换
+                  {config.hero.swipeHint}
                 </span>
               </div>
 
               {/* 序号 */}
               <div className="pointer-events-none absolute bottom-3 left-1/2 z-20 -translate-x-1/2 text-[10px] font-medium tracking-[0.2em] text-white/45">
-                {String(index + 1).padStart(2, '0')} / {String(VIDEOS.length).padStart(2, '0')}
+                {String(index + 1).padStart(2, '0')} /{' '}
+                {String(Math.max(videos.length, 1)).padStart(2, '0')}
               </div>
 
               {/* 双击爱心 */}
@@ -184,7 +192,7 @@ export function PhoneMockup({ onGate }: Props) {
           <span className="absolute inline-flex h-full w-full animate-ping-soft rounded-full bg-mint" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-mint" />
         </span>
-        真实界面预览 · 距你 {formatDistance(current.distanceKm)}
+        真实界面预览{current ? ` · 距你 ${formatDistance(current.distanceKm)}` : ''}
       </p>
     </div>
   )
@@ -192,11 +200,24 @@ export function PhoneMockup({ onGate }: Props) {
 
 /* ------------------------------------------------------------------ */
 
+function EmptyFeed() {
+  return (
+    <div className="snap-start-always flex h-full w-full flex-col items-center justify-center gap-3 bg-[#0c0c0e] px-8 text-center">
+      <Music2 className="h-6 w-6 text-white/25" />
+      <p className="text-[13px] text-white/45">还没有视频</p>
+      <p className="text-[11px] leading-relaxed text-white/25">
+        打开控制台的「视频」标签，添加第一条视频链接
+      </p>
+    </div>
+  )
+}
+
 function FeedCard({
   item,
   index,
   active,
   muted,
+  badge18,
   onToggleMute,
   onGate,
 }: {
@@ -204,12 +225,15 @@ function FeedCard({
   index: number
   active: boolean
   muted: boolean
+  badge18: string
   onToggleMute: () => void
-  onGate: (a: GateAction) => void
+  onGate: (a: GateKey) => void
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const poster = safeImageUrl(item.poster)
+  const avatar = safeImageUrl(item.avatar)
 
-  /** 只让当前这条播放：省流量、省电、也不会几条声音叠在一起 */
+  /** 只让当前这条播放 */
   useEffect(() => {
     const el = videoRef.current
     if (!el) return
@@ -224,10 +248,9 @@ function FeedCard({
 
   return (
     <article className="snap-start-always relative h-full w-full overflow-hidden bg-[#0c0c0e]">
-      {/* 封面：视频加载前先顶上，避免黑屏 */}
-      {item.poster && (
+      {poster && (
         <img
-          src={item.poster}
+          src={poster}
           alt=""
           aria-hidden="true"
           className="absolute inset-0 h-full w-full object-cover"
@@ -237,29 +260,34 @@ function FeedCard({
         />
       )}
 
-      <video
-        ref={videoRef}
-        src={item.src}
-        poster={item.poster}
-        muted={muted}
-        loop
-        playsInline
-        preload={index < 2 ? 'metadata' : 'none'}
-        aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
+      {item.src ? (
+        <video
+          ref={videoRef}
+          src={item.src}
+          poster={poster || undefined}
+          muted={muted}
+          loop
+          playsInline
+          preload={index < 2 ? 'metadata' : 'none'}
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-ink to-ink/60">
+          <span className="text-[11px] text-white/25">未填写视频链接</span>
+        </div>
+      )}
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-black/85" />
       <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/85 to-transparent" />
 
       {item.badge && (
-        <div className="absolute left-4 top-[76px] z-20 inline-flex items-center gap-1 rounded-full bg-brand/90 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-white shadow-glow">
+        <div className="absolute left-4 top-[76px] z-20 inline-flex items-center gap-1 rounded-full bg-wine/90 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-white shadow-glow">
           <MapPin className="h-3 w-3" />
           {item.badge}
         </div>
       )}
 
-      {/* 静音开关 */}
       <button
         type="button"
         onClick={onToggleMute}
@@ -309,27 +337,37 @@ function FeedCard({
       {/* 底部信息 */}
       <div className="absolute inset-x-0 bottom-8 z-20 px-3.5 pr-16">
         <div className="flex items-center gap-2">
-          <img
-            src={item.avatar}
-            alt=""
-            aria-hidden="true"
-            className="h-7 w-7 rounded-full object-cover ring-2 ring-white/70"
-            loading="lazy"
-          />
+          {avatar ? (
+            <img
+              src={avatar}
+              alt=""
+              aria-hidden="true"
+              className="h-7 w-7 rounded-full object-cover ring-2 ring-white/70"
+              loading="lazy"
+            />
+          ) : (
+            <span className="h-7 w-7 rounded-full bg-white/20 ring-2 ring-white/40" />
+          )}
           <span className="text-[13px] font-semibold text-white">{item.name}</span>
-          <span className="rounded-full border border-white/25 px-1.5 py-[1px] text-[9px] font-medium text-white/75">
-            18+
-          </span>
+          {badge18 && (
+            <span className="rounded-full border border-white/25 px-1.5 py-[1px] text-[9px] font-medium text-white/75">
+              {badge18}
+            </span>
+          )}
           <span className="ml-auto rounded-full bg-black/40 px-2 py-[2px] text-[10px] text-white/80 backdrop-blur">
             {formatDistance(item.distanceKm)}
           </span>
         </div>
 
-        <p className="mt-2 line-clamp-2 text-[13px] leading-snug text-white/95">{item.caption}</p>
+        {item.caption && (
+          <p className="mt-2 line-clamp-2 text-[13px] leading-snug text-white/95">
+            {item.caption}
+          </p>
+        )}
 
         <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-          {item.tags.map((tag) => (
-            <span key={tag} className="text-[12px] font-medium text-white/85">
+          {item.tags.filter(Boolean).map((tag, ti) => (
+            <span key={`${tag}-${ti}`} className="text-[12px] font-medium text-white/85">
               {tag}
             </span>
           ))}
@@ -338,7 +376,7 @@ function FeedCard({
         <div className="mt-2 flex items-center gap-1.5 text-[11px] text-white/60">
           <Music2 className="h-3 w-3" />
           <span className="truncate">{item.music}</span>
-          <span className="text-white/25">·</span>
+          {item.postedAt && <span className="text-white/25">·</span>}
           <span className="shrink-0">{item.postedAt}</span>
         </div>
       </div>
@@ -375,6 +413,9 @@ function ActionButton({
 /* ------------------------------------------------------------------ */
 
 function EndCard({ onDownload }: { onDownload: () => void }) {
+  const { config } = useConfig()
+  const b = config.buttons
+
   return (
     <div className="snap-start-always relative flex h-full w-full flex-col items-center justify-center gap-5 overflow-hidden bg-[#0c0c0e] px-7 text-center">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_22%,rgba(139,92,246,0.3),transparent_62%)]" />
@@ -384,11 +425,9 @@ function EndCard({ onDownload }: { onDownload: () => void }) {
       </div>
 
       <div className="relative">
-        <p className="text-[21px] font-semibold leading-snug text-white">预览到这里就结束啦</p>
-        <p className="mt-2.5 text-[14px] leading-relaxed text-white/60">
-          下载 App 解锁完整推荐流，
-          <br />
-          还有你附近 3km 的实时更新。
+        <p className="text-[21px] font-semibold leading-snug text-white">{b.phoneEndTitle}</p>
+        <p className="mt-2.5 whitespace-pre-line text-[14px] leading-relaxed text-white/60">
+          {b.phoneEndBody}
         </p>
       </div>
 
@@ -398,12 +437,14 @@ function EndCard({ onDownload }: { onDownload: () => void }) {
         className="relative inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 text-[14.5px] font-bold text-black transition hover:scale-[1.03] active:scale-95"
       >
         <Download className="h-4 w-4" />
-        免费下载
+        {b.phoneEndCta}
       </button>
 
-      <p className="relative text-[10px] uppercase tracking-[0.24em] text-white/30">
-        18+ · 仅限成年用户
-      </p>
+      {config.hero.badge18 && (
+        <p className="relative text-[10px] uppercase tracking-[0.24em] text-white/30">
+          {config.hero.badge18} · 仅限成年用户
+        </p>
+      )}
     </div>
   )
 }
@@ -415,12 +456,13 @@ function GateSheet({
   onClose,
   onDownload,
 }: {
-  action: GateAction | null
+  action: GateKey | null
   onClose: () => void
-  onDownload: (a: GateAction) => void
+  onDownload: (a: GateKey) => void
 }) {
+  const { config } = useConfig()
   if (!action) return null
-  const copy = GATE_COPY[action]
+  const copy = config.gates[action] ?? config.gates.default
 
   return (
     <div className="absolute inset-0 z-40 flex flex-col justify-end">
@@ -462,7 +504,7 @@ function GateSheet({
             ))}
             <div className="flex items-center justify-center gap-2 py-1 text-[10px] uppercase tracking-[0.2em] text-white/30">
               <span className="h-px w-8 bg-white/15" />
-              +2,839 条评论
+              更多评论需下载 App
               <span className="h-px w-8 bg-white/15" />
             </div>
           </div>
@@ -489,7 +531,7 @@ function GateSheet({
         <button
           type="button"
           onClick={() => onDownload(action)}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand via-brand2 to-accent py-3.5 text-[14px] font-bold text-white shadow-glow transition hover:brightness-110 active:scale-[0.98]"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-wine via-copper to-blush py-3.5 text-[14px] font-bold text-white shadow-glow transition hover:brightness-110 active:scale-[0.98]"
         >
           <Download className="h-4 w-4" />
           {copy.cta}

@@ -4,23 +4,24 @@ export default {
   theme: {
     extend: {
       colors: {
-        /* ── 新调性：深夜 · 酒红 · 铜金 ── */
-        ink: '#0A0607',
-        surface: '#120D0F',
-        raised: '#1B1416',
-        line: '#2A1E21',
-        muted: '#A08F91',
-        cream: '#F6EBE0',
-        blush: '#E9A9A1',
-        copper: '#C08A5C',
-        wine: '#7C1B2C',
-        wineDeep: '#4A0E1A',
+        /* ── 全部走 CSS 变量，控制台改色即时生效 ──
+           写成 rgb(通道 / <alpha-value>) 才能让 /60 这类透明度生效 */
+        ink: 'rgb(var(--c-bg-rgb) / <alpha-value>)',
+        surface: 'rgb(var(--c-surface-rgb) / <alpha-value>)',
+        raised: 'rgb(var(--c-raised-rgb) / <alpha-value>)',
+        line: 'rgb(var(--c-line-rgb) / <alpha-value>)',
+        muted: 'rgb(var(--c-muted-rgb) / <alpha-value>)',
+        cream: 'rgb(var(--c-text-rgb) / <alpha-value>)',
+        blush: 'rgb(var(--c-blush-rgb) / <alpha-value>)',
+        copper: 'rgb(var(--c-copper-rgb) / <alpha-value>)',
+        wine: 'rgb(var(--c-wine-rgb) / <alpha-value>)',
+        wineDeep: 'rgb(var(--c-wine-deep-rgb) / <alpha-value>)',
 
-        /* 兼容旧 token（组件里还在用），值已换成暖色 */
-        brand: '#7C1B2C',
-        brand2: '#C08A5C',
-        accent: '#E9A9A1',
-        mint: '#E7C79B',
+        /* 兼容旧 token（组件里还在用） */
+        brand: 'rgb(var(--c-wine-rgb) / <alpha-value>)',
+        brand2: 'rgb(var(--c-copper-rgb) / <alpha-value>)',
+        accent: 'rgb(var(--c-blush-rgb) / <alpha-value>)',
+        mint: 'rgb(var(--c-mint-rgb) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'PingFang SC', 'sans-serif'],

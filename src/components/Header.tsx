@@ -2,16 +2,13 @@ import { useEffect, useState } from 'react'
 import { ArrowUpRight, Download, Menu, X } from 'lucide-react'
 import { Wordmark } from './BrandSlot'
 import { useScrolledPast } from '../hooks/useReveal'
-
-const NAV = [
-  { label: '亮点', href: '#highlights' },
-  { label: '怎么用', href: '#how' },
-  { label: '安装', href: '#install' },
-]
+import { useConfig } from '../config/store'
 
 export function Header({ onDownload }: { onDownload: () => void }) {
   const scrolled = useScrolledPast(20)
   const [open, setOpen] = useState(false)
+  const { config } = useConfig()
+  const NAV = config.nav
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''
@@ -51,7 +48,7 @@ export function Header({ onDownload }: { onDownload: () => void }) {
                 onClick={onDownload}
                 className="group hidden items-center gap-2 rounded-full bg-white px-4 py-2.5 text-[13px] font-semibold text-black transition hover:scale-[1.03] active:scale-95 sm:inline-flex"
               >
-                免费下载
+                {config.buttons.headerCta}
                 <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               </button>
               <button
@@ -117,7 +114,7 @@ export function Header({ onDownload }: { onDownload: () => void }) {
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand via-brand2 to-accent py-3.5 text-sm font-bold text-white"
           >
             <Download className="h-4 w-4" />
-            免费下载 App
+            {config.buttons.installCta}
           </button>
         </div>
       </div>

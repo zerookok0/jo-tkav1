@@ -6,39 +6,51 @@ import { Highlights, HowItWorks } from './components/Highlights'
 import { InstallSection } from './components/InstallSection'
 import { Footer, MobileDock } from './components/Footer'
 import { InstallModal } from './components/InstallModal'
+import { Nearby } from './components/Nearby'
+import { NightChat } from './components/NightChat'
+import { Console } from './components/console/Console'
 import { useReveal } from './hooks/useReveal'
-import { initPixel, trackOuter, trackInnerAndGo } from './lib/pixel'
-import type { GateAction } from './data/site'
+import { initPixel, trackInnerAndGo, trackOuter } from './lib/pixel'
+import { ConfigProvider, themeVars, useConfig } from './config/store'
+import type { GateKey } from './config/defaults'
 
-export default function App() {
+function Site() {
   useReveal()
+  const { config } = useConfig()
   const [sheetOpen, setSheetOpen] = useState(false)
   const { ref, progress } = useElementProgress<HTMLDivElement>()
 
-  /** Pixel 只在有 ID 时才注入 */
+  /** Pixel 只在填了 ID 时才注入 */
   useEffect(() => {
-    initPixel()
-  }, [])
+    initPixel(config.download.pixelId)
+  }, [config.download.pixelId])
 
-  /**
-   * 外层下载按钮 → InitiateCheckout
-   * 所有页面上的「下载」入口都从这里进来，source 用来区分位置。
-   */
-  const openSheet = useCallback((source: string) => {
-    trackOuter(source)
-    setSheetOpen(true)
-  }, [])
+  /** 主题色落到 CSS 变量 */
+  useEffect(() => {
+    const vars = themeVars(config.theme)
+    const root = document.documentElement
+    Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v))
+  }, [config.theme])
+
+  /** 外层下载按钮 → InitiateCheckout */
+  const openSheet = useCallback(
+    (source: string) => {
+      trackOuter(config.download.pixelId, source)
+      setSheetOpen(true)
+    },
+    [config.download.pixelId],
+  )
 
   const closeSheet = useCallback(() => setSheetOpen(false), [])
 
-  /** 弹窗内「开始下载」 → Purchase，然后跳转 */
+  /** 弹窗内「开始下载」→ Purchase，然后跳转 */
   const confirmDownload = useCallback(() => {
-    trackInnerAndGo('dl_inner_modal')
-  }, [])
+    trackInnerAndGo(config.download.pixelId, config.download.apkUrl, 'dl_inner_modal')
+  }, [config.download.pixelId, config.download.apkUrl])
 
-  /** 手机内点赞/评论等 → 打开同一个弹窗（埋点走外层规则） */
+  /** 手机内点赞/评论 → 打开同一个弹窗 */
   const handleGate = useCallback(
-    (_action?: GateAction) => openSheet('dl_inner_phone'),
+    (_action?: GateKey) => openSheet('dl_inner_phone'),
     [openSheet],
   )
 
@@ -57,16 +69,11 @@ export default function App() {
       <Header onDownload={() => openSheet('dl_outer_header')} />
 
       <main>
-        {/* 区块 1：手机 + 视频流 */}
         <Hero onDownload={() => openSheet('dl_outer_hero')} onGate={handleGate} />
-
-        {/* 区块 2：五个亮点 */}
+        <Nearby />
         <Highlights />
-
-        {/* 区块 3：怎么用 */}
         <HowItWorks />
-
-        {/* 区块 4：安装步骤 + 安全 + FAQ */}
+        <NightChat />
         <InstallSection onDownload={() => openSheet('dl_outer_install')} />
       </main>
 
@@ -74,6 +81,15 @@ export default function App() {
       <MobileDock onDownload={() => openSheet('dl_outer_dock')} />
 
       <InstallModal open={sheetOpen} onClose={closeSheet} onConfirm={confirmDownload} />
+      <Console />
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <ConfigProvider>
+      <Site />
+    </ConfigProvider>
   )
 }

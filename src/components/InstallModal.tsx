@@ -5,39 +5,12 @@ import {
   Check,
   ChevronDown,
   Download,
+  ScanLine,
   ShieldCheck,
   Smartphone,
-  ScanLine,
   X,
 } from 'lucide-react'
-import { APK_META, APK_URL } from '../data/site'
-import { INSTALL_STEPS, SAFETY_POINTS } from '../data/install'
-
-/**
- * 安装弹窗。
- *
- * 刻意与页面第 3 屏分开内容 —— 弹窗里只放「点下去之前的最后三个顾虑」：
- *   1. 为什么提示未知来源（这是侧载最大流失点）
- *   2. 病毒与签名（安全焦虑）
- *   3. 30 秒内必须知道的三个排错口径
- * 页面第 3 屏讲的是「完整步骤 + 权限明细 + 全部 FAQ」。
- */
-
-/** 弹窗专属的 3 条快速排错，和页面 FAQ 不重复 */
-const QUICK_FIXES = [
-  {
-    q: '点下载没反应？',
-    a: '部分浏览器会拦截 APK。换用 Chrome 或系统自带浏览器重新打开本页再点一次。',
-  },
-  {
-    q: '装完找不到图标？',
-    a: '部分国产系统会把新应用放进「未分类」文件夹，或在桌面下拉搜索应用名称。',
-  },
-  {
-    q: '提示「解析包错误」？',
-    a: '通常是下载中断导致文件不完整。删除已下载的文件，重新点一次下载即可。',
-  },
-]
+import { useConfig } from '../config/store'
 
 type Props = {
   open: boolean
@@ -47,8 +20,10 @@ type Props = {
 }
 
 export function InstallModal({ open, onClose, onConfirm }: Props) {
+  const { config } = useConfig()
+  const copy = config.modalCopy
+  const dl = config.download
   const [mounted, setMounted] = useState(open)
-  const panelRef = useRef<HTMLDivElement | null>(null)
   const closeRef = useRef<HTMLButtonElement | null>(null)
 
   /** 进入/退出动画 */
@@ -81,7 +56,6 @@ export function InstallModal({ open, onClose, onConfirm }: Props) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center">
-      {/* 遮罩 */}
       <button
         type="button"
         aria-label="关闭"
@@ -91,9 +65,7 @@ export function InstallModal({ open, onClose, onConfirm }: Props) {
         }`}
       />
 
-      {/* 面板 */}
       <div
-        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="install-modal-title"
@@ -101,8 +73,7 @@ export function InstallModal({ open, onClose, onConfirm }: Props) {
           open ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
         }`}
       >
-        {/* 顶部渐变条 */}
-        <div className="h-[2px] w-full bg-gradient-to-r from-brand via-brand2 to-accent" />
+        <div className="h-[2px] w-full bg-gradient-to-r from-wine via-copper to-blush" />
 
         <button
           ref={closeRef}
@@ -122,100 +93,93 @@ export function InstallModal({ open, onClose, onConfirm }: Props) {
             </span>
             <div>
               <h2 id="install-modal-title" className="text-[19px] font-bold leading-tight text-white">
-                准备下载
+                {copy.title}
               </h2>
-              <p className="mt-1 text-[12.5px] leading-relaxed text-white/45">
-                按这三步安全安装到你的安卓手机
-              </p>
+              <p className="mt-1 text-[12.5px] leading-relaxed text-white/45">{copy.sub}</p>
             </div>
           </div>
 
           {/* 元信息 */}
           <div className="mt-5 grid grid-cols-3 gap-2">
             {[
-              ['版本', APK_META.version],
-              ['大小', APK_META.size],
-              ['系统', APK_META.minAndroid],
+              ['版本', dl.version],
+              ['大小', dl.size],
+              ['系统', dl.minAndroid],
             ].map(([k, v]) => (
               <div
                 key={k}
                 className="rounded-xl border border-white/[0.07] bg-white/[0.03] px-2.5 py-2 text-center"
               >
                 <p className="text-[9.5px] uppercase tracking-[0.14em] text-white/30">{k}</p>
-                <p className="mt-1 text-[12px] font-semibold text-white/85">{v}</p>
+                <p className="mt-1 truncate text-[12px] font-semibold text-white/85">{v}</p>
               </div>
             ))}
           </div>
 
           {/* 三步 */}
           <ol className="mt-5 grid gap-2.5">
-            {INSTALL_STEPS.map((step) => (
+            {config.installSteps.map((step) => (
               <li
-                key={step.no}
+                key={step.id}
                 className="flex gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-3.5"
               >
-                <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand to-brand2 text-[10.5px] font-bold text-white">
+                <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-gradient-to-br from-wine to-copper text-[10.5px] font-bold text-white">
                   {step.no}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-semibold leading-snug text-white/92">{step.title}</p>
+                  <p className="text-[13px] font-semibold leading-snug text-white/90">{step.title}</p>
                   <p className="mt-1 text-[11.5px] leading-[1.7] text-white/45">{step.body}</p>
                 </div>
               </li>
             ))}
           </ol>
 
-          {/* 安全区：数字签名 + 病毒 */}
+          {/* 安全区 */}
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.06] p-3.5">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-emerald-300" />
-                <p className="text-[12px] font-semibold text-emerald-200">签名已校验</p>
+                <p className="text-[12px] font-semibold text-emerald-200">{copy.signTitle}</p>
               </div>
-              <p className="mt-1.5 text-[11px] leading-[1.7] text-emerald-100/60">
-                安装包经过数字签名，安装时系统会自动校验。被篡改过的包装不上。
-              </p>
+              <p className="mt-1.5 text-[11px] leading-[1.7] text-emerald-100/60">{copy.signBody}</p>
             </div>
             <div className="rounded-2xl border border-sky-400/20 bg-sky-400/[0.06] p-3.5">
               <div className="flex items-center gap-2">
                 <ScanLine className="h-4 w-4 text-sky-300" />
-                <p className="text-[12px] font-semibold text-sky-200">可自行复查</p>
+                <p className="text-[12px] font-semibold text-sky-200">{copy.scanTitle}</p>
               </div>
-              <p className="mt-1.5 text-[11px] leading-[1.7] text-sky-100/60">
-                下载后用任意手机杀毒 App 再扫一遍，结果随时可查。
-              </p>
+              <p className="mt-1.5 text-[11px] leading-[1.7] text-sky-100/60">{copy.scanBody}</p>
             </div>
           </div>
 
-          {/* 未来源解释 —— 侧载最大流失点 */}
+          {/* 未来源解释 */}
           <div className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-400/[0.05] p-3.5">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-300" />
-              <p className="text-[12px] font-semibold text-amber-200">为什么会提示「未知来源」？</p>
+              <p className="text-[12px] font-semibold text-amber-200">{copy.unknownTitle}</p>
             </div>
-            <p className="mt-1.5 text-[11px] leading-[1.75] text-amber-100/60">
-              因为本应用没有上架应用商店。安卓对所有非商店渠道的安装包都会给这个提示，
-              这是系统层面的标准行为，不代表文件有问题。点「允许」即可继续。
-            </p>
+            <p className="mt-1.5 text-[11px] leading-[1.75] text-amber-100/60">{copy.unknownBody}</p>
           </div>
 
-          {/* 快速排错（与页面 FAQ 不重复） */}
-          <div className="mt-4">
-            <p className="mb-2 flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-white/35">
-              <Smartphone className="h-3 w-3" />
-              装的过程中卡住了？
-            </p>
-            <div className="divide-y divide-white/[0.06] overflow-hidden rounded-2xl border border-white/[0.07]">
-              {QUICK_FIXES.map((f) => (
-                <QuickFix key={f.q} q={f.q} a={f.a} />
-              ))}
+          {/* 快速排错 */}
+          {copy.fixes.length > 0 && (
+            <div className="mt-4">
+              <p className="mb-2 flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-white/35">
+                <Smartphone className="h-3 w-3" />
+                {copy.fixesTitle}
+              </p>
+              <div className="divide-y divide-white/[0.06] overflow-hidden rounded-2xl border border-white/[0.07]">
+                {copy.fixes.map((f, i) => (
+                  <QuickFix key={`${f.q}-${i}`} q={f.q} a={f.a} />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* 信任点摘要 */}
           <ul className="mt-4 grid gap-1.5">
-            {SAFETY_POINTS.map((p) => (
-              <li key={p.title} className="flex items-start gap-2 text-[11px] text-white/45">
+            {config.safety.map((p) => (
+              <li key={p.id} className="flex items-start gap-2 text-[11px] text-white/45">
                 <Check className="mt-[3px] h-3 w-3 shrink-0 text-mint" />
                 <span>
                   <b className="font-semibold text-white/70">{p.title}</b>
@@ -235,22 +199,23 @@ export function InstallModal({ open, onClose, onConfirm }: Props) {
               onClick={onClose}
               className="w-[34%] shrink-0 rounded-2xl border border-white/12 bg-white/[0.04] py-3.5 text-[13.5px] font-semibold text-white/65 transition hover:bg-white/[0.09] hover:text-white"
             >
-              取消
+              {config.buttons.modalCancel}
             </button>
             <button
               type="button"
               onClick={onConfirm}
-              className="group flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand via-brand2 to-accent py-3.5 text-[14px] font-bold text-white shadow-glow transition hover:brightness-110 active:scale-[0.98]"
+              className="group flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-wine via-copper to-blush py-3.5 text-[14px] font-bold text-white shadow-glow transition hover:brightness-110 active:scale-[0.98]"
             >
               <Download className="h-4 w-4" />
-              我已了解，开始下载
+              {config.buttons.modalConfirm}
               <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
             </button>
           </div>
-          <p className="mt-2.5 text-center text-[9.5px] leading-relaxed text-white/25">
-            继续即表示同意用户协议与隐私政策 · 本应用仅限 18 岁以上
-            <span className="sr-only">下载链接：{APK_URL}</span>
-          </p>
+          {copy.legal && (
+            <p className="mt-2.5 text-center text-[9.5px] leading-relaxed text-white/25">
+              {copy.legal}
+            </p>
+          )}
         </div>
       </div>
     </div>

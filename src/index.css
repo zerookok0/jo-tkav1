@@ -5,6 +5,32 @@
 @layer base {
   :root {
     color-scheme: dark;
+
+    /* 主题色：运行时由控制台覆盖（见 ConfigProvider → themeVars）
+       每个色给两份：hex 用于直接取值，rgb 通道用于 /55 这类透明度修饰 */
+    --c-bg: #0a0607;
+    --c-bg-rgb: 10 6 7;
+    --c-surface: #120d0f;
+    --c-surface-rgb: 18 13 15;
+    --c-raised: #1b1416;
+    --c-raised-rgb: 27 20 22;
+    --c-line: #2a1e21;
+    --c-line-rgb: 42 30 33;
+    --c-muted: #a08f91;
+    --c-muted-rgb: 160 143 145;
+    --c-text: #f6ebe0;
+    --c-text-rgb: 246 235 224;
+    --c-blush: #e9a9a1;
+    --c-blush-rgb: 233 169 161;
+    --c-copper: #c08a5c;
+    --c-copper-rgb: 192 138 92;
+    --c-wine: #7c1b2c;
+    --c-wine-rgb: 124 27 44;
+    --c-wine-deep: #4a0e1a;
+    --c-wine-deep-rgb: 74 14 26;
+    --c-mint: #e7c79b;
+    --c-mint-rgb: 231 199 155;
+
     --brand: 124 27 44;
     --accent: 233 169 161;
     --copper: 192 138 92;
@@ -78,14 +104,25 @@
   }
 
   .text-gradient {
-    background-image: linear-gradient(98deg, #f6ebe0 4%, #e9a9a1 34%, #c08a5c 68%, #9b2436 100%);
+    background-image: linear-gradient(
+      98deg,
+      rgb(var(--c-text-rgb)) 4%,
+      rgb(var(--c-blush-rgb)) 34%,
+      rgb(var(--c-copper-rgb)) 68%,
+      rgb(var(--c-wine-rgb)) 100%
+    );
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
   .text-gradient-warm {
-    background-image: linear-gradient(96deg, #e9a9a1 0%, #c08a5c 52%, #f6ebe0 100%);
+    background-image: linear-gradient(
+      96deg,
+      rgb(var(--c-blush-rgb)) 0%,
+      rgb(var(--c-copper-rgb)) 52%,
+      rgb(var(--c-text-rgb)) 100%
+    );
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

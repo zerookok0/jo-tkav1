@@ -1,32 +1,40 @@
 import { useEffect, useState } from 'react'
 import { ArrowUpRight, Download, Moon, MapPin, ShieldCheck } from 'lucide-react'
 import { PhoneMockup } from './PhoneMockup'
-import { HERO_SLIDES, type GateAction } from '../data/site'
+import { useConfig } from '../config/store'
+import type { GateKey } from '../config/defaults'
 
 type Props = {
   onDownload: () => void
-  onGate: (a: GateAction) => void
+  onGate: (a: GateKey) => void
 }
 
 const ROTATE_MS = 8000
 
 export function Hero({ onDownload, onGate }: Props) {
+  const { config } = useConfig()
+  const hero = config.hero
+  const slides = config.heroSlides
   const [slide, setSlide] = useState(0)
   const [paused, setPaused] = useState(false)
 
+  /** 文案被删到 0 条时不崩，索引也不会越界 */
+  const safeSlide = slides.length ? Math.min(slide, slides.length - 1) : 0
+
   useEffect(() => {
-    if (paused) return
+    if (paused || slides.length < 2) return
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (reduced) return
     const t = window.setInterval(() => {
-      setSlide((s) => (s + 1) % HERO_SLIDES.length)
+      setSlide((s) => (s + 1) % slides.length)
     }, ROTATE_MS)
     return () => window.clearInterval(t)
-  }, [paused])
+  }, [paused, slides.length])
+
+  const trustIcons = [MapPin, ShieldCheck]
 
   return (
     <section id="top" className="relative overflow-hidden pb-16 pt-24 sm:pb-24 sm:pt-28 lg:pt-32">
-      {/* 顶部暖光 */}
       <div
         className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[520px] w-[900px] -translate-x-1/2 opacity-70 blur-[100px]"
         style={{
@@ -38,7 +46,7 @@ export function Hero({ onDownload, onGate }: Props) {
 
       <div className="container-page">
         <div className="grid items-center gap-12 lg:grid-cols-[1.02fr_0.98fr] lg:gap-8">
-          {/* ─────────── 左：文案 ─────────── */}
+          {/* 左：文案 */}
           <div className="relative z-10 mx-auto max-w-[560px] text-center lg:mx-0 lg:text-left">
             {/* 深夜状态条 */}
             <div className="inline-flex items-center gap-2.5 rounded-full border border-cream/[0.09] bg-cream/[0.035] px-3.5 py-2 backdrop-blur">
@@ -47,8 +55,11 @@ export function Hero({ onDownload, onGate }: Props) {
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-blush" />
               </span>
               <span className="text-[12px] font-medium tracking-wide text-cream/60">
-                现在 <span className="font-semibold text-cream">01:24</span> · 你附近还有{' '}
-                <span className="font-semibold text-cream">1,284</span> 个人没睡
+                {hero.statusPre} <span className="font-semibold text-cream">{hero.statusTime}</span>
+                {' · '}
+                {hero.statusMid}{' '}
+                <span className="font-semibold text-cream">{hero.statusCount}</span>{' '}
+                {hero.statusPost}
               </span>
             </div>
 
@@ -59,11 +70,11 @@ export function Hero({ onDownload, onGate }: Props) {
               onMouseLeave={() => setPaused(false)}
               aria-live="polite"
             >
-              {HERO_SLIDES.map((s, i) => {
-                const isActive = i === slide
+              {slides.map((s, i) => {
+                const isActive = i === safeSlide
                 return (
                   <div
-                    key={s.title}
+                    key={s.id}
                     aria-hidden={!isActive}
                     className={`transition-all duration-700 ${
                       isActive
@@ -88,61 +99,66 @@ export function Hero({ onDownload, onGate }: Props) {
             </div>
 
             {/* 轮播点 */}
-            <div className="mt-2 flex items-center justify-center gap-2 lg:justify-start">
-              {HERO_SLIDES.map((s, i) => (
-                <button
-                  key={s.title}
-                  type="button"
-                  onClick={() => setSlide(i)}
-                  aria-label={`切换到第 ${i + 1} 条文案`}
-                  aria-current={i === slide}
-                  className="relative h-[3px] overflow-hidden rounded-full bg-cream/12 transition-all duration-300"
-                  style={{ width: i === slide ? 40 : 18 }}
-                >
-                  {i === slide && (
-                    <span
-                      key={`${slide}-${paused}`}
-                      className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-wine via-blush to-copper"
-                      style={{
-                        animation: paused ? 'none' : `hero-bar ${ROTATE_MS}ms linear forwards`,
-                        width: paused ? '100%' : undefined,
-                      }}
-                    />
-                  )}
-                </button>
-              ))}
-            </div>
+            {slides.length > 1 && (
+              <div className="mt-2 flex items-center justify-center gap-2 lg:justify-start">
+                {slides.map((s, i) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setSlide(i)}
+                    aria-label={`切换到第 ${i + 1} 条文案`}
+                    aria-current={i === safeSlide}
+                    className="relative h-[3px] overflow-hidden rounded-full bg-cream/12 transition-all duration-300"
+                    style={{ width: i === safeSlide ? 40 : 18 }}
+                  >
+                    {i === safeSlide && (
+                      <span
+                        key={`${safeSlide}-${paused}`}
+                        className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-wine via-blush to-copper"
+                        style={{
+                          animation: paused ? 'none' : `hero-bar ${ROTATE_MS}ms linear forwards`,
+                          width: paused ? '100%' : undefined,
+                        }}
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* CTA */}
             <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center lg:justify-start">
               <button type="button" onClick={onDownload} className="btn-primary group">
                 <Download className="h-4 w-4" />
-                进来看一眼
+                {config.buttons.heroCta}
                 <ArrowUpRight className="h-4 w-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               </button>
               <a href="#nearby" className="btn-ghost">
                 <Moon className="h-4 w-4" />
-                先看看有谁
+                {config.buttons.heroSecondary}
               </a>
             </div>
 
             {/* 信任行 */}
             <div className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2.5 text-[11.5px] text-cream/32 lg:justify-start">
-              <span className="inline-flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 text-copper/60" />
-                三公里内 · 不跨城
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <ShieldCheck className="h-3.5 w-3.5 text-copper/60" />
-                可匿名出镜 · 声音可变
-              </span>
-              <span className="rounded-full border border-cream/15 px-2 py-[1px] text-[10px] font-bold tracking-wide">
-                18+
-              </span>
+              {hero.trusted.map((t, i) => {
+                const Icon = trustIcons[i % trustIcons.length]
+                return (
+                  <span key={`${t}-${i}`} className="inline-flex items-center gap-1.5">
+                    <Icon className="h-3.5 w-3.5 text-copper/60" />
+                    {t}
+                  </span>
+                )
+              })}
+              {hero.badge18 && (
+                <span className="rounded-full border border-cream/15 px-2 py-[1px] text-[10px] font-bold tracking-wide">
+                  {hero.badge18}
+                </span>
+              )}
             </div>
           </div>
 
-          {/* ─────────── 右：手机 ─────────── */}
+          {/* 右：手机 */}
           <div className="relative z-0">
             <div className="animate-fade-up">
               <PhoneMockup onGate={onGate} />
@@ -150,9 +166,7 @@ export function Hero({ onDownload, onGate }: Props) {
           </div>
         </div>
 
-        <p className="mt-12 text-center text-[12.5px] leading-relaxed text-cream/28">
-          上面是真的界面 —— 直接上下滑。看到第几条会忍不住，我们也不知道
-        </p>
+        <p className="mt-12 text-center text-[12.5px] leading-relaxed text-cream/28">{hero.note}</p>
       </div>
     </section>
   )
