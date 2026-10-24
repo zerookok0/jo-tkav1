@@ -248,9 +248,8 @@ export const DEFAULT_UI: UiCopy = {
 /* ══════════════════════════ 首屏 ══════════════════════════ */
 
 export type HeroConfig = {
-  /** 状态条文案（三段，中间加粗） */
+  /** 状态条前缀，后面紧跟实时本地时间 */
   statusPre: string
-  statusTime: string
   statusMid: string
   statusCount: string
   statusPost: string
@@ -266,7 +265,6 @@ export type HeroConfig = {
 
 export const DEFAULT_HERO: HeroConfig = {
   statusPre: '现在',
-  statusTime: '01:24',
   statusMid: '你附近还有',
   statusCount: '1,284',
   statusPost: '个人没睡',

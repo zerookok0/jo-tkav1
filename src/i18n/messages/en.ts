@@ -44,7 +44,6 @@ export const en: DeepPartial<SiteConfig> = {
 
   hero: {
     statusPre: 'At',
-    statusTime: '01:24',
     statusMid: 'there are still',
     statusCount: '1,284',
     statusPost: 'people near you awake',

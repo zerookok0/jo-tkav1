@@ -3,6 +3,7 @@ import { ArrowUpRight, Download, Moon, MapPin, ShieldCheck } from 'lucide-react'
 import { PhoneMockup } from './PhoneMockup'
 import { useConfig } from '../config/store'
 import { fill } from '../lib/format'
+import { useClock } from '../lib/clock'
 import type { GateKey } from '../config/defaults'
 
 type Props = {
@@ -17,6 +18,8 @@ export function Hero({ onDownload, onGate }: Props) {
   const hero = config.hero
   const slides = config.heroSlides
   const ui = config.ui
+  /** 与手机状态栏同一个节拍、同一份快照 —— 两处永远同一分钟 */
+  const now = useClock()
   const [slide, setSlide] = useState(0)
   const [paused, setPaused] = useState(false)
 
@@ -57,7 +60,7 @@ export function Hero({ onDownload, onGate }: Props) {
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-blush" />
               </span>
               <span className="text-[12px] font-medium tracking-wide text-cream/60">
-                {hero.statusPre} <span className="font-semibold text-cream">{hero.statusTime}</span>
+                {hero.statusPre} <span className="font-semibold text-cream">{now}</span>
                 {' · '}
                 {hero.statusMid}{' '}
                 <span className="font-semibold text-cream">{hero.statusCount}</span>{' '}

@@ -42,7 +42,6 @@ export const ar: DeepPartial<SiteConfig> = {
 
   hero: {
     statusPre: 'الآن',
-    statusTime: '01:24',
     statusMid: 'لا يزال هناك',
     statusCount: '1,284',
     statusPost: 'شخصًا قريبًا منك لم يناموا',

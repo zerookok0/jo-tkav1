@@ -286,9 +286,6 @@ export function HeroEditor() {
           <Field label="前缀">
             <TextInput value={hero.statusPre} onChange={(v) => set('hero.statusPre', v)} />
           </Field>
-          <Field label="时间">
-            <TextInput value={hero.statusTime} onChange={(v) => set('hero.statusTime', v)} />
-          </Field>
           <Field label="中段">
             <TextInput value={hero.statusMid} onChange={(v) => set('hero.statusMid', v)} />
           </Field>
@@ -299,6 +296,11 @@ export function HeroEditor() {
             <TextInput value={hero.statusPost} onChange={(v) => set('hero.statusPost', v)} />
           </Field>
         </Grid>
+
+        <p className="mt-2 rounded-lg border border-copper/20 bg-copper/[0.06] px-2.5 py-2 text-[10px] leading-relaxed text-cream/45">
+          中间那串时间是<strong className="font-semibold text-cream/70">实时本地时钟</strong>，
+          首屏状态条和手机状态栏读同一份快照，永远同一分钟。不需要也不能手填 —— 访客几点看到就是几点。
+        </p>
 
         <div className="mt-3">
           <Field label="信任行标签">

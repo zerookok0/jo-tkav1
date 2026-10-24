@@ -17,6 +17,7 @@ import { AppIcon, AppName } from './BrandSlot'
 import { useConfig } from '../config/store'
 import type { GateKey } from '../config/defaults'
 import { fill, formatCount, formatDistance, safeImageUrl } from '../lib/format'
+import { useClock } from '../lib/clock'
 import type { VideoItem } from '../config/videos'
 
 type Props = {
@@ -34,6 +35,8 @@ export function PhoneMockup({ onGate }: Props) {
   const [gate, setGate] = useState<GateKey | null>(null)
   const [burst, setBurst] = useState(false)
   const lastTap = useRef(0)
+  /** 与首屏状态条共用同一份时钟快照 —— 两处永远显示同一分钟 */
+  const now = useClock()
 
   /** 滚动 → 计算当前是第几条 */
   const handleScroll = useCallback(() => {
@@ -86,7 +89,7 @@ export function PhoneMockup({ onGate }: Props) {
 
             {/* 状态栏 */}
             <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-between px-6 pb-2 pt-[13px] text-[11px] font-semibold text-white">
-              <span className="tracking-tight">9:41</span>
+              <span className="tracking-tight">{now}</span>
               <div className="flex items-center gap-1.5">
                 <span className="flex items-end gap-[2px]">
                   <i className="block h-[4px] w-[2px] rounded-sm bg-white/90" />
