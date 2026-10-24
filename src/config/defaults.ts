@@ -82,9 +82,10 @@ export const DEFAULT_THEME: ThemeConfig = {
 /* ══════════════════════════ 导航 ══════════════════════════ */
 
 export const DEFAULT_NAV: NavItem[] = [
-  { id: 'n1', label: '亮点', href: '#highlights' },
-  { id: 'n2', label: '怎么用', href: '#how' },
-  { id: 'n3', label: '安装', href: '#install' },
+  { id: 'n1', label: '看视频', href: '#top' },
+  { id: 'n2', label: '附近的人', href: '#nearby' },
+  { id: 'n3', label: '开始聊天', href: '#chat' },
+  { id: 'n4', label: '下载', href: '#install' },
 ]
 
 /** 顶部与各处的按钮文字 */
@@ -112,6 +113,136 @@ export const DEFAULT_BUTTONS: ButtonCopy = {
   installCta: '免费下载 App',
   modalCancel: '取消',
   modalConfirm: '我已了解，开始下载',
+}
+
+/* ══════════════════════════ 界面文字 ══════════════════════════ */
+
+/**
+ * 零散文案：按钮以外的短句、无障碍朗读标签、空状态提示。
+ *
+ * 这些东西以前零散写在组件里，翻译时最容易漏 —— 所以统一收到这里。
+ * 带 `{xxx}` 的是模板，渲染时用 fill() 填值：
+ * 英文、阿语的词序和中文不同，不能靠字符串拼接。
+ */
+export type UiCopy = {
+  /* 全局 */
+  skipToContent: string
+  close: string
+  closeDialog: string
+
+  /* 品牌与语言 */
+  appIconAlt: string
+  appIconPlaceholder: string
+  appNamePlaceholder: string
+  appNamePlaceholderHint: string
+  localeSwitchAria: string
+  localeMenuAria: string
+
+  /* 顶栏与菜单 */
+  backToTop: string
+  openMenu: string
+  closeMenu: string
+  mainNav: string
+  mobileNav: string
+
+  /* 首屏 */
+  slideDot: string
+
+  /* 手机预览 */
+  feedRegionAria: string
+  previewLabel: string
+  previewDistance: string
+  emptyFeedTitle: string
+  emptyFeedBody: string
+  videoMissingSrc: string
+  unmute: string
+  mute: string
+  likeAria: string
+  commentAria: string
+  saveAria: string
+  shareAria: string
+  ageOnly: string
+  officialBadge: string
+  appSummary: string
+  moreComments: string
+  gateLegal: string
+  commentSamples: { name: string; text: string }[]
+
+  /* 附近的人 */
+  cardAria: string
+  avatarAlt: string
+  sayHi: string
+  noAvatar: string
+  bridgeTitle: string
+  bridgeBody: string
+  bridgeCta: string
+
+  /* 私聊 */
+  chatInputAria: string
+  chatContinueCta: string
+
+  /* 安装与下载 */
+  metaVersion: string
+  metaSize: string
+  metaSystem: string
+}
+
+export const DEFAULT_UI: UiCopy = {
+  skipToContent: '跳到主要内容',
+  close: '关闭',
+  closeDialog: '关闭弹窗',
+
+  appIconAlt: '{name} 图标',
+  appIconPlaceholder: '应用图标占位',
+  appNamePlaceholder: '应用名称',
+  appNamePlaceholderHint: '在控制台的「品牌」里填入应用名称',
+  localeSwitchAria: '语言：{label}',
+  localeMenuAria: '选择语言',
+
+  backToTop: '回到顶部',
+  openMenu: '打开菜单',
+  closeMenu: '关闭菜单',
+  mainNav: '主导航',
+  mobileNav: '移动端导航',
+
+  slideDot: '切换到第 {n} 条文案',
+
+  feedRegionAria: '短视频预览，可上下滑动切换',
+  previewLabel: '真实界面预览',
+  previewDistance: '距你 {distance}',
+  emptyFeedTitle: '还没有视频',
+  emptyFeedBody: '打开控制台的「视频」标签，添加第一条视频链接',
+  videoMissingSrc: '未填写视频链接',
+  unmute: '开启声音',
+  mute: '静音',
+  likeAria: '点赞，需下载 App',
+  commentAria: '评论，需下载 App',
+  saveAria: '收藏，需下载 App',
+  shareAria: '分享，需下载 App',
+  ageOnly: '{age} · 仅限成年用户',
+  officialBadge: '官方版',
+  appSummary: '附近视频 · 一键上传 · 实时互动',
+  moreComments: '更多评论需下载 App',
+  gateLegal: '继续即表示同意用户协议 · 本应用仅限 18 岁以上',
+  commentSamples: [
+    { name: '小满', text: '这个角度也太好看了吧' },
+    { name: 'Nova', text: '求定位！想去同款地方' },
+  ],
+
+  cardAria: '和 {name} 打个招呼，需下载 App',
+  avatarAlt: '{name}，{age} 岁',
+  sayHi: '打个招呼',
+  noAvatar: '未设置头像',
+  bridgeTitle: '看中了哪一位？直接开口就行。',
+  bridgeBody: '文字、语音、照片都能发。她看完即焚，聊不下去随时关掉。',
+  bridgeCta: '进去聊两句',
+
+  chatInputAria: '继续聊天需要下载 App',
+  chatContinueCta: '继续聊下去 · 免费下载',
+
+  metaVersion: '版本',
+  metaSize: '大小',
+  metaSystem: '系统',
 }
 
 /* ══════════════════════════ 首屏 ══════════════════════════ */

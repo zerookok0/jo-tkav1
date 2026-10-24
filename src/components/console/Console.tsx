@@ -13,6 +13,7 @@ import {
   InstallEditor,
   VideosEditor,
 } from './editors2'
+import { UiEditor } from './editors3'
 import { ADMIN_ENTRY } from '../../config/admin'
 import { exitAdminRoute, isAdminRoute } from '../../lib/adminRoute'
 
@@ -97,6 +98,7 @@ export function Console() {
         {tab === 'chat' && <ChatEditor />}
         {tab === 'install' && <InstallEditor />}
         {tab === 'videos' && <VideosEditor />}
+        {tab === 'ui' && <UiEditor />}
         {tab === 'data' && <DataPanel />}
       </ConsolePanel>
     </>

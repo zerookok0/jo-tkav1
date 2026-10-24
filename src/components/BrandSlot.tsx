@@ -1,6 +1,6 @@
 import { useId } from 'react'
 import { useConfig } from '../config/store'
-import { safeImageUrl } from '../lib/format'
+import { fill, safeImageUrl } from '../lib/format'
 
 type IconProps = {
   className?: string
@@ -12,12 +12,13 @@ export function AppIcon({ className = 'h-14 w-14' }: IconProps) {
   const id = useId()
   const src = safeImageUrl(config.brand.iconUrl)
   const name = config.brand.name.trim()
+  const ui = config.ui
 
   if (src) {
     return (
       <img
         src={src}
-        alt={name || '应用图标'}
+        alt={name ? fill(ui.appIconAlt, { name }) : ui.appIconPlaceholder}
         loading="lazy"
         decoding="async"
         className={`${className} rounded-2xl object-cover ring-1 ring-white/15`}
@@ -29,7 +30,7 @@ export function AppIcon({ className = 'h-14 w-14' }: IconProps) {
     <div
       className={`${className} relative grid place-items-center overflow-hidden rounded-2xl border border-dashed border-white/25 bg-white/[0.04]`}
       role="img"
-      aria-label={name ? `${name} 图标` : '应用图标占位'}
+      aria-label={name ? fill(ui.appIconAlt, { name }) : ui.appIconPlaceholder}
     >
       <svg viewBox="0 0 48 48" className="h-1/2 w-1/2 text-white/35" aria-hidden="true">
         <defs>
@@ -59,6 +60,7 @@ export function AppIcon({ className = 'h-14 w-14' }: IconProps) {
 export function AppName({ className = '' }: IconProps) {
   const { config } = useConfig()
   const name = config.brand.name.trim()
+  const ui = config.ui
 
   if (name) {
     return <span className={`font-semibold tracking-tight ${className}`}>{name}</span>
@@ -66,9 +68,9 @@ export function AppName({ className = '' }: IconProps) {
   return (
     <span
       className={`inline-flex items-center rounded-full border border-dashed border-white/25 bg-white/[0.03] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-white/45 ${className}`}
-      title="在控制台的「品牌」里填入应用名称"
+      title={ui.appNamePlaceholderHint}
     >
-      应用名称
+      {ui.appNamePlaceholder}
     </span>
   )
 }

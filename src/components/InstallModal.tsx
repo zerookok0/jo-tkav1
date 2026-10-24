@@ -23,6 +23,7 @@ export function InstallModal({ open, onClose, onConfirm }: Props) {
   const { config } = useConfig()
   const copy = config.modalCopy
   const dl = config.download
+  const ui = config.ui
   const [mounted, setMounted] = useState(open)
   const closeRef = useRef<HTMLButtonElement | null>(null)
 
@@ -58,7 +59,7 @@ export function InstallModal({ open, onClose, onConfirm }: Props) {
     <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center">
       <button
         type="button"
-        aria-label="关闭"
+        aria-label={ui.close}
         onClick={onClose}
         className={`absolute inset-0 h-full w-full bg-black/70 backdrop-blur-[4px] transition-opacity duration-200 ${
           open ? 'opacity-100' : 'opacity-0'
@@ -79,8 +80,8 @@ export function InstallModal({ open, onClose, onConfirm }: Props) {
           ref={closeRef}
           type="button"
           onClick={onClose}
-          aria-label="关闭弹窗"
-          className="absolute right-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full bg-white/[0.08] text-white/60 transition hover:bg-white/15 hover:text-white"
+          aria-label={ui.closeDialog}
+          className="absolute end-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full bg-white/[0.08] text-white/60 transition hover:bg-white/15 hover:text-white"
         >
           <X className="h-4 w-4" />
         </button>
@@ -102,9 +103,9 @@ export function InstallModal({ open, onClose, onConfirm }: Props) {
           {/* 元信息 */}
           <div className="mt-5 grid grid-cols-3 gap-2">
             {[
-              ['版本', dl.version],
-              ['大小', dl.size],
-              ['系统', dl.minAndroid],
+              [ui.metaVersion, dl.version],
+              [ui.metaSize, dl.size],
+              [ui.metaSystem, dl.minAndroid],
             ].map(([k, v]) => (
               <div
                 key={k}

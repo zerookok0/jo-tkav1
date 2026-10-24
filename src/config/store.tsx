@@ -30,6 +30,7 @@ import {
   DEFAULT_SAFETY,
   DEFAULT_STEPS,
   DEFAULT_THEME,
+  DEFAULT_UI,
   type BrandConfig,
   type ButtonCopy,
   type DownloadConfig,
@@ -41,8 +42,10 @@ import {
   type SafetyPoint,
   type StepItem,
   type ThemeConfig,
+  type UiCopy,
 } from './defaults'
 import { DEFAULT_VIDEOS, type VideoItem } from './videos'
+import { SITE_CONTENT } from './site.content'
 import { hexToRgbChannels } from '../lib/format'
 import type {
   ChatStory,
@@ -76,6 +79,8 @@ export type SiteConfig = {
   gates: Record<string, GateEntry>
   footer: { about: string; groups: FooterGroup[]; dockNote: string }
   videos: VideoItem[]
+  /** 零散界面文字（朗读标签、空状态、模板句） */
+  ui: UiCopy
 }
 
 export const DEFAULT_CONFIG: SiteConfig = {
@@ -102,6 +107,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
   gates: DEFAULT_GATES,
   footer: DEFAULT_FOOTER,
   videos: DEFAULT_VIDEOS,
+  ui: DEFAULT_UI,
 }
 
 const STORAGE_KEY = 'nightyle.config.v1'
@@ -129,18 +135,36 @@ function merge<T>(base: T, patch: unknown): T {
   return patch as T
 }
 
+/**
+ * 仓库里的基线配置。
+ *
+ * DEFAULT_CONFIG 是代码里的兜底值；SITE_CONTENT 是 `npm run config:apply`
+ * 从你导出的 JSON 生成的那份「正式内容」。两者合并，才是站点真正的初始状态。
+ *
+ * 关键点：这份基线是进 git 的 —— 线上、别人的浏览器，看到的都是它。
+ * 而 localStorage 只在你自己的设备上生效，那是草稿，不是发布。
+ */
+export const BASE_CONFIG: SiteConfig = merge(DEFAULT_CONFIG, SITE_CONTENT)
+
 function loadConfig(): SiteConfig {
-  if (typeof window === 'undefined') return DEFAULT_CONFIG
+  if (typeof window === 'undefined') return BASE_CONFIG
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) return DEFAULT_CONFIG
-    return merge(DEFAULT_CONFIG, JSON.parse(raw))
+    if (!raw) return BASE_CONFIG
+    return merge(BASE_CONFIG, JSON.parse(raw))
   } catch {
-    return DEFAULT_CONFIG
+    return BASE_CONFIG
   }
 }
 
-type Store = {
+/**
+ * 配置读写的完整接口。
+ *
+ * 导出它是给语言层用的：LocaleProvider 会复制一份，
+ * 只把 config 换成翻译版，增删改的函数原样透传 ——
+ * 所以写进 localStorage 的永远是中文母版。
+ */
+export type Store = {
   config: SiteConfig
   /** 深路径更新，例如 set('brand.name', 'xx') */
   set: (path: string, value: unknown) => void
@@ -153,7 +177,16 @@ type Store = {
   dirty: boolean
 }
 
-const ConfigContext = createContext<Store | null>(null)
+/**
+ * 配置上下文。
+ *
+ * 导出它是为了语言层：LocaleProvider 会在内层再包一层，
+ * 把 config 换成「当前语言」的版本。
+ *
+ * 于是页面组件照旧 useConfig()，拿到的就是翻译后的内容；
+ * 控制台在语言层之外，拿到的仍然是中文主库 —— 改的永远是母版。
+ */
+export const ConfigContext = createContext<Store | null>(null)
 
 function setPath<T>(obj: T, path: string, value: unknown): T {
   const keys = path.split('.')
@@ -199,7 +232,7 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const reset = useCallback(() => {
-    setConfig(DEFAULT_CONFIG)
+    setConfig(BASE_CONFIG)
     try {
       window.localStorage.removeItem(STORAGE_KEY)
     } catch {
@@ -208,11 +241,11 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const resetSection = useCallback((key: keyof SiteConfig) => {
-    setConfig((prev) => ({ ...prev, [key]: DEFAULT_CONFIG[key] }))
+    setConfig((prev) => ({ ...prev, [key]: BASE_CONFIG[key] }))
   }, [])
 
   const replaceAll = useCallback((next: SiteConfig) => {
-    setConfig(merge(DEFAULT_CONFIG, next))
+    setConfig(merge(BASE_CONFIG, next))
   }, [])
 
   const exportJson = useCallback(() => JSON.stringify(config, null, 2), [config])
@@ -223,15 +256,16 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
       if (!parsed || typeof parsed !== 'object') {
         return { ok: false, error: '内容不是一个对象' }
       }
-      setConfig(merge(DEFAULT_CONFIG, parsed))
+      setConfig(merge(BASE_CONFIG, parsed))
       return { ok: true }
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : 'JSON 解析失败' }
     }
   }, [])
 
+  /** 和仓库里的正式内容不一致 = 有还没进 git 的草稿 */
   const dirty = useMemo(
-    () => JSON.stringify(config) !== JSON.stringify(DEFAULT_CONFIG),
+    () => JSON.stringify(config) !== JSON.stringify(BASE_CONFIG),
     [config],
   )
 

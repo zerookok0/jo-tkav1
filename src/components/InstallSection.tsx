@@ -4,12 +4,15 @@ import { useConfig } from '../config/store'
 
 type Props = {
   onDownload: () => void
+  /** 「直链地址（备用）」也走弹窗埋点，不再直接跳 APK */
+  onBypass: () => void
 }
 
-export function InstallSection({ onDownload }: Props) {
+export function InstallSection({ onDownload, onBypass }: Props) {
   const { config } = useConfig()
   const copy = config.installCopy
   const dl = config.download
+  const ui = config.ui
 
   return (
     <section id="install" className="relative py-20 sm:py-28">
@@ -59,7 +62,7 @@ export function InstallSection({ onDownload }: Props) {
                       <Check className="h-3 w-3 text-emerald-400" />
                       {p.name}
                     </span>
-                    <span className="text-right text-[11.5px] text-white/35">{p.why}</span>
+                    <span className="text-end text-[11.5px] text-white/35">{p.why}</span>
                   </div>
                 ))}
               </div>
@@ -97,9 +100,9 @@ export function InstallSection({ onDownload }: Props) {
               </div>
               <div className="mt-3.5 grid grid-cols-3 gap-2">
                 {[
-                  ['版本', dl.version],
-                  ['大小', dl.size],
-                  ['系统', dl.minAndroid],
+                  [ui.metaVersion, dl.version],
+                  [ui.metaSize, dl.size],
+                  [ui.metaSystem, dl.minAndroid],
                 ].map(([k, v]) => (
                   <div
                     key={k}
@@ -111,13 +114,14 @@ export function InstallSection({ onDownload }: Props) {
                 ))}
               </div>
               {dl.apkUrl && (
-                <a
-                  href={dl.apkUrl}
+                <button
+                  type="button"
+                  onClick={onBypass}
                   className="mt-3.5 inline-flex items-center gap-1.5 text-[11.5px] text-white/35 transition hover:text-white/70"
                 >
                   {copy.apkLink}
                   <ArrowUpRight className="h-3 w-3" />
-                </a>
+                </button>
               )}
             </div>
 
@@ -174,7 +178,7 @@ function FaqRow({ q, a, defaultOpen }: { q: string; a: string; defaultOpen?: boo
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-4 py-5 text-left"
+        className="flex w-full items-center justify-between gap-4 py-5 text-start"
       >
         <span className="text-[14.5px] font-medium text-white/85">{q}</span>
         <span
@@ -202,7 +206,7 @@ function FaqRow({ q, a, defaultOpen }: { q: string; a: string; defaultOpen?: boo
         style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
       >
         <div className="min-h-0">
-          <p className="max-w-[600px] pb-5 pr-8 text-[13.5px] leading-[1.85] text-white/50">{a}</p>
+          <p className="max-w-[600px] pb-5 pe-8 text-[13.5px] leading-[1.85] text-white/50">{a}</p>
         </div>
       </div>
     </div>

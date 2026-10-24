@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import { Flame } from 'lucide-react'
+import { ArrowRight, Flame, Send } from 'lucide-react'
 import { useConfig } from '../config/store'
 import { Icon } from './Icon'
 import { safeImageUrl } from '../lib/format'
 
-export function NightChat() {
+type Props = {
+  /** 点输入框 / 点「接着聊」→ 打开下载弹窗 */
+  onStart: () => void
+}
+
+export function NightChat({ onStart }: Props) {
   const { config } = useConfig()
-  const { chatCopy } = config
+  const { chatCopy, ui } = config
   const story = config.chat[0]
 
   const [shown, setShown] = useState(0)
@@ -109,7 +114,7 @@ export function NightChat() {
                   ) : (
                     <div className="h-9 w-9 rounded-full bg-white/10" />
                   )}
-                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface bg-blush" />
+                  <span className="absolute -bottom-0.5 -end-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface bg-blush" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[13.5px] font-semibold text-cream">{story.name}</p>
@@ -146,8 +151,8 @@ export function NightChat() {
                       <p
                         className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-[1.65] ${
                           mine
-                            ? 'rounded-br-md bg-gradient-to-br from-wine to-wineDeep text-cream'
-                            : 'rounded-bl-md border border-cream/[0.07] bg-cream/[0.055] text-cream/85'
+                            ? 'rounded-ee-md bg-gradient-to-br from-wine to-wineDeep text-cream'
+                            : 'rounded-es-md border border-cream/[0.07] bg-cream/[0.055] text-cream/85'
                         }`}
                       >
                         {line.text}
@@ -159,7 +164,7 @@ export function NightChat() {
                 {/* 正在输入 */}
                 {shown < total && shown > 0 && (
                   <div className="mt-1 flex justify-start">
-                    <div className="flex items-center gap-1 rounded-2xl rounded-bl-md border border-cream/[0.07] bg-cream/[0.055] px-3.5 py-3">
+                    <div className="flex items-center gap-1 rounded-2xl rounded-es-md border border-cream/[0.07] bg-cream/[0.055] px-3.5 py-3">
                       {[0, 1, 2].map((d) => (
                         <span
                           key={d}
@@ -181,16 +186,31 @@ export function NightChat() {
                 )}
               </div>
 
-              {/* 输入框 */}
-              <div className="border-t border-cream/[0.07] px-4 py-3">
-                <div className="flex items-center gap-2 rounded-full border border-cream/[0.08] bg-cream/[0.03] px-3.5 py-2.5">
-                  <span className="flex-1 text-[12px] text-cream/25">
+              {/* 输入框：点了就引导下载 */}
+              <div className="relative border-t border-cream/[0.07] px-4 py-3">
+                <button
+                  type="button"
+                  onClick={onStart}
+                  aria-label={ui.chatInputAria}
+                  className="group flex w-full items-center gap-2 rounded-full border border-cream/[0.08] bg-cream/[0.03] px-3.5 py-2.5 text-left transition hover:border-copper/40 hover:bg-copper/[0.08]"
+                >
+                  <span className="flex-1 truncate text-[12px] text-cream/30 transition group-hover:text-cream/50">
                     {chatCopy.inputPlaceholder}
                   </span>
-                  <span className="rounded-full bg-cream/90 px-3 py-1 text-[10.5px] font-semibold text-ink">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-cream/90 px-3 py-1 text-[10.5px] font-semibold text-ink transition group-hover:bg-copper group-hover:text-white">
                     {chatCopy.sendLabel}
+                    <Send className="h-2.5 w-2.5" />
                   </span>
-                </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onStart}
+                  className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-wine via-copper to-blush py-2.5 text-[12px] font-bold text-white shadow-glow transition hover:brightness-110 active:scale-[0.98]"
+                >
+                  {ui.chatContinueCta}
+                  <ArrowRight className="h-3 w-3" />
+                </button>
               </div>
             </div>
           </div>

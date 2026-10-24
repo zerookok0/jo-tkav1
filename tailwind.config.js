@@ -27,6 +27,7 @@ export default {
         sans: ['Inter', 'system-ui', '-apple-system', 'PingFang SC', 'sans-serif'],
         display: ['"Noto Serif SC"', '"Songti SC"', 'SimSun', 'Georgia', 'serif'],
         latin: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+        arabic: ['"Noto Sans Arabic"', 'Inter', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         '4xl': '2rem',

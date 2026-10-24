@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ArrowUpRight, Download, Menu, X } from 'lucide-react'
 import { Wordmark } from './BrandSlot'
+import { LocaleSwitch } from './LocaleSwitch'
 import { useScrolledPast } from '../hooks/useReveal'
 import { useConfig } from '../config/store'
 
@@ -9,6 +10,7 @@ export function Header({ onDownload }: { onDownload: () => void }) {
   const [open, setOpen] = useState(false)
   const { config } = useConfig()
   const NAV = config.nav
+  const ui = config.ui
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''
@@ -26,11 +28,11 @@ export function Header({ onDownload }: { onDownload: () => void }) {
               scrolled ? 'glass shadow-panel' : 'border border-transparent bg-transparent'
             }`}
           >
-            <a href="#top" aria-label="回到顶部" className="shrink-0">
+            <a href="#top" aria-label={ui.backToTop} className="shrink-0">
               <Wordmark />
             </a>
 
-            <nav className="hidden items-center gap-1 md:flex" aria-label="主导航">
+            <nav className="hidden items-center gap-1 md:flex" aria-label={ui.mainNav}>
               {NAV.map((item) => (
                 <a
                   key={item.href}
@@ -43,6 +45,7 @@ export function Header({ onDownload }: { onDownload: () => void }) {
             </nav>
 
             <div className="flex items-center gap-2">
+              <LocaleSwitch />
               <button
                 type="button"
                 onClick={onDownload}
@@ -54,7 +57,7 @@ export function Header({ onDownload }: { onDownload: () => void }) {
               <button
                 type="button"
                 onClick={() => setOpen(true)}
-                aria-label="打开菜单"
+                aria-label={ui.openMenu}
                 className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-white/80 md:hidden"
               >
                 <Menu className="h-4 w-4" />
@@ -68,7 +71,7 @@ export function Header({ onDownload }: { onDownload: () => void }) {
       <div className={`fixed inset-0 z-50 md:hidden ${open ? '' : 'pointer-events-none'}`} aria-hidden={!open}>
         <button
           type="button"
-          aria-label="关闭菜单"
+          aria-label={ui.closeMenu}
           onClick={() => setOpen(false)}
           className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300 ${
             open ? 'opacity-100' : 'opacity-0'
@@ -81,17 +84,20 @@ export function Header({ onDownload }: { onDownload: () => void }) {
         >
           <div className="flex items-center justify-between">
             <Wordmark />
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              aria-label="关闭菜单"
-              className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white/70"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <LocaleSwitch compact />
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label={ui.closeMenu}
+                className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white/70"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
-          <nav className="mt-5 grid gap-1" aria-label="移动端导航">
+          <nav className="mt-5 grid gap-1" aria-label={ui.mobileNav}>
             {NAV.map((item) => (
               <a
                 key={item.href}

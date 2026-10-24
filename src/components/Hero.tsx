@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ArrowUpRight, Download, Moon, MapPin, ShieldCheck } from 'lucide-react'
 import { PhoneMockup } from './PhoneMockup'
 import { useConfig } from '../config/store'
+import { fill } from '../lib/format'
 import type { GateKey } from '../config/defaults'
 
 type Props = {
@@ -15,6 +16,7 @@ export function Hero({ onDownload, onGate }: Props) {
   const { config } = useConfig()
   const hero = config.hero
   const slides = config.heroSlides
+  const ui = config.ui
   const [slide, setSlide] = useState(0)
   const [paused, setPaused] = useState(false)
 
@@ -47,7 +49,7 @@ export function Hero({ onDownload, onGate }: Props) {
       <div className="container-page">
         <div className="grid items-center gap-12 lg:grid-cols-[1.02fr_0.98fr] lg:gap-8">
           {/* 左：文案 */}
-          <div className="relative z-10 mx-auto max-w-[560px] text-center lg:mx-0 lg:text-left">
+          <div className="relative z-10 mx-auto max-w-[560px] text-center lg:mx-0 lg:text-start">
             {/* 深夜状态条 */}
             <div className="inline-flex items-center gap-2.5 rounded-full border border-cream/[0.09] bg-cream/[0.035] px-3.5 py-2 backdrop-blur">
               <span className="relative flex h-1.5 w-1.5">
@@ -106,7 +108,7 @@ export function Hero({ onDownload, onGate }: Props) {
                     key={s.id}
                     type="button"
                     onClick={() => setSlide(i)}
-                    aria-label={`切换到第 ${i + 1} 条文案`}
+                    aria-label={fill(ui.slideDot, { n: i + 1 })}
                     aria-current={i === safeSlide}
                     className="relative h-[3px] overflow-hidden rounded-full bg-cream/12 transition-all duration-300"
                     style={{ width: i === safeSlide ? 40 : 18 }}
@@ -114,7 +116,7 @@ export function Hero({ onDownload, onGate }: Props) {
                     {i === safeSlide && (
                       <span
                         key={`${safeSlide}-${paused}`}
-                        className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-wine via-blush to-copper"
+                        className="absolute inset-y-0 start-0 rounded-full bg-gradient-to-r from-wine via-blush to-copper"
                         style={{
                           animation: paused ? 'none' : `hero-bar ${ROTATE_MS}ms linear forwards`,
                           width: paused ? '100%' : undefined,

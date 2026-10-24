@@ -16,7 +16,7 @@ import {
 import { AppIcon, AppName } from './BrandSlot'
 import { useConfig } from '../config/store'
 import type { GateKey } from '../config/defaults'
-import { formatCount, formatDistance, safeImageUrl } from '../lib/format'
+import { fill, formatCount, formatDistance, safeImageUrl } from '../lib/format'
 import type { VideoItem } from '../config/videos'
 
 type Props = {
@@ -27,6 +27,7 @@ type Props = {
 export function PhoneMockup({ onGate }: Props) {
   const { config } = useConfig()
   const videos = config.videos
+  const ui = config.ui
   const scrollerRef = useRef<HTMLDivElement | null>(null)
   const [index, setIndex] = useState(0)
   const [muted, setMuted] = useState(true)
@@ -54,6 +55,13 @@ export function PhoneMockup({ onGate }: Props) {
   }, [])
 
   const current = videos[Math.min(index, Math.max(videos.length - 1, 0))]
+
+  /** 手机下方小字：预览说明 + 可选的距离 */
+  const previewNote = current
+    ? `${ui.previewLabel} · ${fill(ui.previewDistance, {
+        distance: formatDistance(current.distanceKm),
+      })}`
+    : ui.previewLabel
 
   return (
     <div className="relative mx-auto w-full max-w-[420px]">
@@ -110,7 +118,7 @@ export function PhoneMockup({ onGate }: Props) {
                 onDoubleClick={handleDoubleClick}
                 tabIndex={0}
                 role="region"
-                aria-label="短视频预览，可上下滑动切换"
+                aria-label={ui.feedRegionAria}
                 className="hide-scrollbar snap-y-mandatory absolute inset-0 overflow-y-auto overscroll-contain"
               >
                 {videos.length === 0 ? (
@@ -192,7 +200,7 @@ export function PhoneMockup({ onGate }: Props) {
           <span className="absolute inline-flex h-full w-full animate-ping-soft rounded-full bg-mint" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-mint" />
         </span>
-        真实界面预览{current ? ` · 距你 ${formatDistance(current.distanceKm)}` : ''}
+        {previewNote}
       </p>
     </div>
   )
@@ -201,13 +209,12 @@ export function PhoneMockup({ onGate }: Props) {
 /* ------------------------------------------------------------------ */
 
 function EmptyFeed() {
+  const { config } = useConfig()
   return (
     <div className="snap-start-always flex h-full w-full flex-col items-center justify-center gap-3 bg-[#0c0c0e] px-8 text-center">
       <Music2 className="h-6 w-6 text-white/25" />
-      <p className="text-[13px] text-white/45">还没有视频</p>
-      <p className="text-[11px] leading-relaxed text-white/25">
-        打开控制台的「视频」标签，添加第一条视频链接
-      </p>
+      <p className="text-[13px] text-white/45">{config.ui.emptyFeedTitle}</p>
+      <p className="text-[11px] leading-relaxed text-white/25">{config.ui.emptyFeedBody}</p>
     </div>
   )
 }
@@ -230,6 +237,7 @@ function FeedCard({
   onGate: (a: GateKey) => void
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const ui = useConfig().config.ui
   const poster = safeImageUrl(item.poster)
   const avatar = safeImageUrl(item.avatar)
 
@@ -274,7 +282,7 @@ function FeedCard({
         />
       ) : (
         <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-ink to-ink/60">
-          <span className="text-[11px] text-white/25">未填写视频链接</span>
+          <span className="text-[11px] text-white/25">{ui.videoMissingSrc}</span>
         </div>
       )}
 
@@ -282,7 +290,7 @@ function FeedCard({
       <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/85 to-transparent" />
 
       {item.badge && (
-        <div className="absolute left-4 top-[76px] z-20 inline-flex items-center gap-1 rounded-full bg-wine/90 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-white shadow-glow">
+        <div className="absolute start-4 top-[76px] z-20 inline-flex items-center gap-1 rounded-full bg-wine/90 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-white shadow-glow">
           <MapPin className="h-3 w-3" />
           {item.badge}
         </div>
@@ -291,37 +299,37 @@ function FeedCard({
       <button
         type="button"
         onClick={onToggleMute}
-        aria-label={muted ? '开启声音' : '静音'}
-        className="absolute right-3 top-[74px] z-20 grid h-8 w-8 place-items-center rounded-full bg-black/35 text-white/85 backdrop-blur transition hover:bg-black/55"
+        aria-label={muted ? ui.unmute : ui.mute}
+        className="absolute end-3 top-[74px] z-20 grid h-8 w-8 place-items-center rounded-full bg-black/35 text-white/85 backdrop-blur transition hover:bg-black/55"
       >
         {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
       </button>
 
-      {/* 右侧操作栏 */}
-      <div className="absolute bottom-16 right-2.5 z-20 flex flex-col items-center gap-5">
+      {/* 操作栏 */}
+      <div className="absolute bottom-16 end-2.5 z-20 flex flex-col items-center gap-5">
         <ActionButton
           icon={<Heart className="h-7 w-7 fill-white text-white" />}
           label={formatCount(item.likes)}
           onClick={() => onGate('like')}
-          ariaLabel="点赞，需下载 App"
+          ariaLabel={ui.likeAria}
         />
         <ActionButton
           icon={<MessageCircle className="h-7 w-7 fill-white text-white" />}
           label={formatCount(item.comments)}
           onClick={() => onGate('comment')}
-          ariaLabel="评论，需下载 App"
+          ariaLabel={ui.commentAria}
         />
         <ActionButton
           icon={<Bookmark className="h-6 w-6 fill-white text-white" />}
           label={formatCount(item.saves)}
           onClick={() => onGate('save')}
-          ariaLabel="收藏，需下载 App"
+          ariaLabel={ui.saveAria}
         />
         <ActionButton
           icon={<Share2 className="h-6 w-6 fill-white text-white" />}
           label={formatCount(item.shares)}
           onClick={() => onGate('share')}
-          ariaLabel="分享，需下载 App"
+          ariaLabel={ui.shareAria}
         />
         <div className="relative mt-1 grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-[#3a3a42] to-[#111] ring-1 ring-white/25">
           <div className="animate-spin-slow absolute inset-0 rounded-full bg-gradient-to-tr from-brand/60 via-transparent to-accent/60" />
@@ -335,7 +343,7 @@ function FeedCard({
       </div>
 
       {/* 底部信息 */}
-      <div className="absolute inset-x-0 bottom-8 z-20 px-3.5 pr-16">
+      <div className="absolute inset-x-0 bottom-8 z-20 pe-16 ps-3.5">
         <div className="flex items-center gap-2">
           {avatar ? (
             <img
@@ -354,7 +362,7 @@ function FeedCard({
               {badge18}
             </span>
           )}
-          <span className="ml-auto rounded-full bg-black/40 px-2 py-[2px] text-[10px] text-white/80 backdrop-blur">
+          <span className="ms-auto rounded-full bg-black/40 px-2 py-[2px] text-[10px] text-white/80 backdrop-blur">
             {formatDistance(item.distanceKm)}
           </span>
         </div>
@@ -415,6 +423,7 @@ function ActionButton({
 function EndCard({ onDownload }: { onDownload: () => void }) {
   const { config } = useConfig()
   const b = config.buttons
+  const ui = config.ui
 
   return (
     <div className="snap-start-always relative flex h-full w-full flex-col items-center justify-center gap-5 overflow-hidden bg-[#0c0c0e] px-7 text-center">
@@ -442,7 +451,7 @@ function EndCard({ onDownload }: { onDownload: () => void }) {
 
       {config.hero.badge18 && (
         <p className="relative text-[10px] uppercase tracking-[0.24em] text-white/30">
-          {config.hero.badge18} · 仅限成年用户
+          {fill(ui.ageOnly, { age: config.hero.badge18 })}
         </p>
       )}
     </div>
@@ -461,6 +470,7 @@ function GateSheet({
   onDownload: (a: GateKey) => void
 }) {
   const { config } = useConfig()
+  const ui = config.ui
   if (!action) return null
   const copy = config.gates[action] ?? config.gates.default
 
@@ -468,7 +478,7 @@ function GateSheet({
     <div className="absolute inset-0 z-40 flex flex-col justify-end">
       <button
         type="button"
-        aria-label="关闭"
+        aria-label={ui.close}
         onClick={onClose}
         className="absolute inset-0 h-full w-full bg-black/60 backdrop-blur-[3px]"
       />
@@ -483,28 +493,26 @@ function GateSheet({
         <button
           type="button"
           onClick={onClose}
-          aria-label="关闭弹窗"
-          className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-full bg-white/10 text-white/70 transition hover:bg-white/20"
+          aria-label={ui.closeDialog}
+          className="absolute end-3 top-3 grid h-7 w-7 place-items-center rounded-full bg-white/10 text-white/70 transition hover:bg-white/20"
         >
           <X className="h-3.5 w-3.5" />
         </button>
 
         {action === 'comment' ? (
           <div className="mb-4 space-y-2">
-            {[
-              ['小满', '这个角度也太好看了吧'],
-              ['Nova', '求定位！想去同款地方'],
-            ].map(([who, text]) => (
-              <div key={who} className="flex items-start gap-2">
+            {ui.commentSamples.map((sample, si) => (
+              <div key={`${sample.name}-${si}`} className="flex items-start gap-2">
                 <div className="mt-0.5 h-6 w-6 shrink-0 rounded-full bg-white/15" />
                 <p className="text-[12px] leading-relaxed text-white/55">
-                  <span className="font-semibold text-white/70">{who}</span> {text}
+                  <span className="font-semibold text-white/70">{sample.name}</span>{' '}
+                  {sample.text}
                 </p>
               </div>
             ))}
             <div className="flex items-center justify-center gap-2 py-1 text-[10px] uppercase tracking-[0.2em] text-white/30">
               <span className="h-px w-8 bg-white/15" />
-              更多评论需下载 App
+              {ui.moreComments}
               <span className="h-px w-8 bg-white/15" />
             </div>
           </div>
@@ -515,12 +523,10 @@ function GateSheet({
               <div className="flex items-center gap-2">
                 <AppName className="!border-0 !bg-transparent !p-0 !text-[13px] !tracking-normal normal-case" />
                 <span className="rounded-full bg-white/10 px-1.5 py-[1px] text-[9px] text-white/60">
-                  官方版
+                  {ui.officialBadge}
                 </span>
               </div>
-              <p className="mt-1 truncate text-[10.5px] text-white/45">
-                附近视频 · 一键上传 · 实时互动
-              </p>
+              <p className="mt-1 truncate text-[10.5px] text-white/45">{ui.appSummary}</p>
             </div>
           </div>
         )}
@@ -538,7 +544,7 @@ function GateSheet({
         </button>
 
         <p className="mt-3 text-center text-[9.5px] leading-relaxed text-white/30">
-          继续即表示同意用户协议 · 本应用仅限 18 岁以上
+          {ui.gateLegal}
         </p>
       </div>
     </div>

@@ -1,10 +1,15 @@
-import { MapPin, MessageCircle } from 'lucide-react'
+import { ArrowUpRight, MapPin, MessageCircle } from 'lucide-react'
 import { useConfig } from '../config/store'
-import { formatMeters, safeImageUrl } from '../lib/format'
+import { fill, formatMeters, safeImageUrl } from '../lib/format'
 
-export function Nearby() {
+type Props = {
+  /** 点卡片 / 点「打个招呼」→ 打开下载弹窗 */
+  onChat: () => void
+}
+
+export function Nearby({ onChat }: Props) {
   const { config } = useConfig()
-  const { nearbyCopy, people } = config
+  const { nearbyCopy, people, ui } = config
 
   return (
     <section id="nearby" className="relative py-16 sm:py-24">
@@ -41,7 +46,17 @@ export function Nearby() {
             return (
               <article
                 key={p.id}
-                className="reveal group relative overflow-hidden rounded-[26px] border border-cream/[0.08] bg-surface"
+                role="button"
+                tabIndex={0}
+                aria-label={fill(ui.cardAria, { name: p.name })}
+                onClick={onChat}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onChat()
+                  }
+                }}
+                className="reveal group relative cursor-pointer overflow-hidden rounded-[26px] border border-cream/[0.08] bg-surface transition duration-500 hover:-translate-y-1 hover:border-copper/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-copper/60"
                 style={{ transitionDelay: `${i * 80}ms` }}
               >
                 {/* 图 */}
@@ -49,21 +64,21 @@ export function Nearby() {
                   {avatar ? (
                     <img
                       src={avatar}
-                      alt={`${p.name}，${p.age} 岁`}
+                      alt={fill(ui.avatarAlt, { name: p.name, age: p.age })}
                       loading="lazy"
                       decoding="async"
                       className="h-full w-full scale-[1.02] object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.09]"
                     />
                   ) : (
                     <div className="grid h-full w-full place-items-center bg-gradient-to-br from-wine/40 via-surface to-ink text-[13px] text-cream/25">
-                      未设置头像
+                      {ui.noAvatar}
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/25 to-transparent" />
                   <div className="absolute inset-0 bg-gradient-to-br from-wine/20 via-transparent to-transparent mix-blend-soft-light" />
 
                   {/* 距离 */}
-                  <div className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full border border-cream/15 bg-black/40 px-2.5 py-1 backdrop-blur">
+                  <div className="absolute start-3 top-3 inline-flex items-center gap-1 rounded-full border border-cream/15 bg-black/40 px-2.5 py-1 backdrop-blur">
                     <MapPin className="h-3 w-3 text-copper" />
                     <span className="text-[10.5px] font-medium tracking-wide text-cream/85">
                       {formatMeters(p.meters)}
@@ -71,7 +86,7 @@ export function Nearby() {
                   </div>
 
                   {/* 在线 */}
-                  <div className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-cream/12 bg-black/40 px-2 py-1 backdrop-blur">
+                  <div className="absolute end-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-cream/12 bg-black/40 px-2 py-1 backdrop-blur">
                     <span
                       className={`h-1.5 w-1.5 rounded-full ${
                         p.live
@@ -99,7 +114,7 @@ export function Nearby() {
                 {/* 她说的话 */}
                 <div className="relative border-t border-cream/[0.06] px-4 pb-4 pt-3.5">
                   <p className="text-[13px] leading-[1.75] text-cream/70">
-                    <span className="mr-1 font-display text-[15px] text-copper/80">“</span>
+                    <span className="me-1 font-display text-[15px] text-copper/80">“</span>
                     {p.quote}
                   </p>
 
@@ -114,8 +129,10 @@ export function Nearby() {
                         </span>
                       ))}
                     </div>
-                    <span className="grid h-7 w-7 place-items-center rounded-full border border-cream/10 bg-cream/[0.04] text-cream/45 transition group-hover:border-copper/40 group-hover:text-copper">
-                      <MessageCircle className="h-3.5 w-3.5" />
+                    <span className="inline-flex items-center gap-1 rounded-full border border-cream/10 bg-cream/[0.04] px-2.5 py-1 text-[10.5px] font-medium text-cream/50 transition group-hover:border-copper/40 group-hover:bg-copper/10 group-hover:text-copper">
+                      <MessageCircle className="h-3 w-3" />
+                      {ui.sayHi}
+                      <ArrowUpRight className="h-2.5 w-2.5 opacity-0 transition group-hover:opacity-100" />
                     </span>
                   </div>
                 </div>
@@ -129,6 +146,23 @@ export function Nearby() {
             {nearbyCopy.footnote}
           </p>
         )}
+
+        {/* 第二屏底部引导 → 第三屏聊天 */}
+        <div className="reveal mt-10 flex flex-col items-center gap-4 rounded-3xl border border-cream/[0.08] bg-gradient-to-br from-wine/[0.14] via-surface/60 to-ink px-6 py-8 text-center sm:flex-row sm:justify-between sm:text-left">
+          <div>
+            <p className="text-[15px] font-semibold text-cream">{ui.bridgeTitle}</p>
+            <p className="mt-1.5 text-[12.5px] leading-relaxed text-cream/45">
+              {ui.bridgeBody}
+            </p>
+          </div>
+          <a
+            href="#chat"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-wine via-copper to-blush px-5 py-3 text-[13px] font-bold text-white shadow-glow transition hover:brightness-110 active:scale-[0.98]"
+          >
+            {ui.bridgeCta}
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </a>
+        </div>
       </div>
     </section>
   )

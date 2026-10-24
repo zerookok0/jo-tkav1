@@ -18,6 +18,18 @@ export const formatMeters = (m: number): string => {
   return m < 1000 ? `${Math.round(m)}m` : `${(m / 1000).toFixed(1)}km`
 }
 
+/**
+ * 模板填充：fill('距你 {distance}', { distance: '320m' })
+ *
+ * 为什么不直接字符串拼接：英文、阿拉伯语的词序和中文不同，
+ * 把变量位置写死在模板里，翻译时才不用改代码。
+ * 找不到的占位符原样保留，方便发现漏翻的键。
+ */
+export const fill = (tpl: string, vars: Record<string, string | number>): string =>
+  tpl.replace(/\{(\w+)\}/g, (whole, key: string) =>
+    key in vars ? String(vars[key]) : whole,
+  )
+
 /** 新增列表项时用的短 id */
 export const uid = (prefix = 'id'): string =>
   `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`

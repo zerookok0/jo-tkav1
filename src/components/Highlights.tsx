@@ -163,7 +163,7 @@ export function HowItWorks() {
               style={{ transitionDelay: `${i * 80}ms` }}
             >
               {i < steps.length - 1 && (
-                <span className="pointer-events-none absolute -right-1.5 top-12 hidden h-px w-3 bg-gradient-to-r from-white/20 to-transparent sm:block" />
+                <span className="pointer-events-none absolute -end-1.5 top-12 hidden h-px w-3 bg-gradient-to-r from-white/20 to-transparent sm:block rtl:bg-gradient-to-l" />
               )}
 
               <div className="flex items-center justify-between">

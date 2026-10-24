@@ -20,6 +20,7 @@ export type TabKey =
   | 'chat'
   | 'install'
   | 'videos'
+  | 'ui'
   | 'data'
 
 export const TABS: { key: TabKey; label: string }[] = [
@@ -32,6 +33,7 @@ export const TABS: { key: TabKey; label: string }[] = [
   { key: 'chat', label: '私聊' },
   { key: 'install', label: '安装' },
   { key: 'videos', label: '视频' },
+  { key: 'ui', label: '界面文字' },
   { key: 'data', label: '数据' },
 ]
 
@@ -204,10 +206,31 @@ export function DataPanel() {
 
   return (
     <div className="grid gap-3 pt-3">
+      <div className="rounded-xl border border-copper/25 bg-copper/[0.07] p-3">
+        <p className="text-[11.5px] font-semibold text-copper/90">改动还没上线？</p>
+        <p className="mt-1 text-[10.5px] leading-relaxed text-cream/40">
+          这里改的内容只存在你当前浏览器里，别人打开网址看不到。要让所有人都看到，按下面三步走：
+        </p>
+        <ol className="mt-2 grid gap-1.5 text-[10.5px] leading-relaxed text-cream/55">
+          <li className="flex gap-1.5">
+            <span className="shrink-0 text-copper/70">1.</span>
+            <span>点下面的「导出为文件」，得到 site-config.json</span>
+          </li>
+          <li className="flex gap-1.5">
+            <span className="shrink-0 text-copper/70">2.</span>
+            <span>把文件放到项目根目录，运行 npm run config:apply</span>
+          </li>
+          <li className="flex gap-1.5">
+            <span className="shrink-0 text-copper/70">3.</span>
+            <span>提交并推送，线上自动重新构建</span>
+          </li>
+        </ol>
+      </div>
+
       <div className="rounded-xl border border-cream/[0.08] bg-white/[0.02] p-3">
         <p className="text-[11.5px] font-semibold text-cream/75">备份与恢复</p>
         <p className="mt-1 text-[10.5px] leading-relaxed text-cream/35">
-          配置存在这台设备的浏览器里。换设备或清理缓存前，先导出备份。
+          配置也存在这台设备的浏览器里。换设备或清理缓存前，先导出备份。
         </p>
         <div className="mt-3 grid gap-2">
           <button

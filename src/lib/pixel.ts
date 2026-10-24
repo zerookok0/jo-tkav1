@@ -1,13 +1,16 @@
 /**
  * ────────────────────────────────────────────────────────────────
- *  Facebook Pixel  ·  只有两个按钮会触发
+ *  Facebook Pixel  ·  事件口径
  * ────────────────────────────────────────────────────────────────
- *  外层「下载」按钮 → InitiateCheckout
- *  弹窗内「开始下载」 → Purchase
- *  其余按钮（点赞/评论/收藏/分享/FAQ/取消/关闭）一律不触发。
+ *  不是「只有两个按钮」触发，而是「两个事件」：
  *
- *  所有参数都从控制台配置里传入，不再依赖编译期常量，
- *  所以在控制台改了 Pixel ID 或下载链接，立即生效。
+ *  1) 任何入口弹出下载框  → InitiateCheckout（openSheet 统一触发）
+ *     包括：顶部导航 / 首屏按钮 / 手机内点赞评论收藏分享 /
+ *           附近的人卡片 / 聊天输入框 / 安装区 CTA / 底部 dock / 备用直链
+ *  2) 弹窗内「开始下载」  → Purchase（并发起跳转）
+ *
+ *  其余按钮（FAQ / 取消 / 关闭 / 菜单）不触发，这是故意的。
+ *  每个入口都会带一个 source，方便在事件管理器里看哪个入口转化最好。
  * ────────────────────────────────────────────────────────────────
  */
 
@@ -24,6 +27,9 @@ let injected = false
 let currentId = ''
 
 const active = (pixelId: string): boolean => Boolean(pixelId && pixelId.trim())
+
+/** 控制台自检：在浏览器 Console 里看事件是否真的发出去了 */
+const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV
 
 /** 动态注入 Pixel 脚本。ID 变化时会重新 init。 */
 export function initPixel(pixelId: string) {
@@ -53,6 +59,8 @@ export function initPixel(pixelId: string) {
   currentId = id
   window.fbq?.('init', id)
   window.fbq?.('track', 'PageView')
+
+  if (isDev) console.info('[pixel] init', id)
 }
 
 /** 埋点：只从下面两个白名单入口调用 */
@@ -62,13 +70,24 @@ export function trackLead(
   source: string,
 ) {
   if (typeof window === 'undefined') return
-  if (!active(pixelId) || typeof window.fbq !== 'function') return
+
+  if (!active(pixelId)) {
+    if (isDev) console.warn('[pixel] 未配置 Pixel ID，事件被跳过：', event, source)
+    return
+  }
+  if (typeof window.fbq !== 'function') {
+    if (isDev) console.warn('[pixel] fbq 尚未就绪，事件被跳过：', event, source)
+    return
+  }
+
   window.fbq('track', event, {
     content_name: source,
     content_category: 'app_download',
     currency: 'USD',
     value: 0,
   })
+
+  if (isDev) console.info('[pixel] 已上报', event, '←', source)
 }
 
 /** 外层按钮：所有「下载」入口统一走这里 → InitiateCheckout */
@@ -78,17 +97,29 @@ export function trackOuter(pixelId: string, source: string) {
 
 /**
  * 弹窗内按钮：先上报，再跳转。
- * 加一点延迟，避免页面跳走导致请求被打断、事件丢失。
- * 没填 Pixel 时直接跳转，不做任何请求。
+ *
+ * 跳转会打断尚未发出的请求，所以：
+ *  - 先触发 Purchase
+ *  - 再等一小段时间让 fbevents 把请求送出去
+ *  - 然后用一个 a[download] 点击去下载（比 location.href 更不容易被拦截）
  */
 export function trackInnerAndGo(pixelId: string, apkUrl: string, source = 'dl_inner_modal') {
   const go = () => {
-    if (apkUrl) window.location.href = apkUrl
+    if (!apkUrl) return
+    const a = document.createElement('a')
+    a.href = apkUrl
+    a.rel = 'noopener'
+    a.style.display = 'none'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
   }
+
   if (!active(pixelId)) {
     go()
     return
   }
+
   trackLead(pixelId, 'Purchase', source)
-  window.setTimeout(go, 320)
+  window.setTimeout(go, 400)
 }

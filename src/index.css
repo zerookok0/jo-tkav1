@@ -85,6 +85,36 @@
     @apply font-display;
     font-feature-settings: 'palt' 1;
   }
+
+  /* ── 阿拉伯语 ──
+     阿语字母上下都有附加符号，中文用的行高会挤在一起，
+     而且 Noto Serif SC 没有阿语字形，会掉到系统字体上。
+     所以整站换成 Noto Sans Arabic，并把行高放宽一点。 */
+  html[lang='ar'] body {
+    font-family: 'Noto Sans Arabic', 'Inter', system-ui, sans-serif;
+  }
+
+  html[lang='ar'] h1,
+  html[lang='ar'] h2,
+  html[lang='ar'] h3 {
+    font-family: 'Noto Sans Arabic', 'Noto Serif SC', serif;
+    font-feature-settings: normal;
+    line-height: 1.5;
+  }
+
+  html[lang='ar'] p,
+  html[lang='ar'] li,
+  html[lang='ar'] span,
+  html[lang='ar'] a,
+  html[lang='ar'] button {
+    line-height: 1.85;
+  }
+
+  /* 阿语里不该有「字间距拉开」的效果，会断字 */
+  html[lang='ar'] .eyebrow,
+  html[lang='ar'] .tracking-wider-cn {
+    letter-spacing: 0.02em;
+  }
 }
 
 @layer components {
