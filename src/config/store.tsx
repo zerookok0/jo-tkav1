@@ -46,6 +46,7 @@ import {
 } from './defaults'
 import { DEFAULT_VIDEOS, type VideoItem } from './videos'
 import { SITE_CONTENT } from './site.content'
+import { LEGACY_KEYS, STORAGE_KEYS } from './version'
 import { hexToRgbChannels } from '../lib/format'
 import type {
   ChatStory,
@@ -113,10 +114,21 @@ export const DEFAULT_CONFIG: SiteConfig = {
   ui: DEFAULT_UI,
 }
 
-const STORAGE_KEY = 'nightyle.config.v1'
+/**
+ * 本机存储键。
+ *
+ * 键名里带内容版本号（见 ./version.ts）：文案大改就把版本号 +1，
+ * 旧键立刻读不到。
+ *
+ * 这正是「切到阿拉伯语却看到中文」的根因：
+ * 主库早已写成阿语，但老访客的浏览器里存着更早那版「中文主库」，
+ * 读取时合并优先级高于默认值，于是文字被中文覆盖回去了。
+ * 换一把新钥匙，旧的覆盖就再也读不到。
+ */
+const STORAGE_KEY = STORAGE_KEYS.saved
 
 /** 草稿（改了还没点保存的内容）单独存一份：刷新不丢，也不会污染已保存的内容 */
-const DRAFT_KEY = 'nightyle.config.draft.v1'
+const DRAFT_KEY = STORAGE_KEYS.draft
 
 /**
  * 深合并：保证新增字段能从默认值补上，
@@ -153,7 +165,23 @@ function merge<T>(base: T, patch: unknown): T {
 export const BASE_CONFIG: SiteConfig = merge(DEFAULT_CONFIG, SITE_CONTENT)
 
 /** 仓库基线内容的指纹：部署新内容后，它的值会变 */
-const BASE_SIG_KEY = 'nightyle.config.basesig.v1'
+const BASE_SIG_KEY = STORAGE_KEYS.baseSig
+
+/**
+ * 清掉以前版本的键。
+ *
+ * 为什么主动清，而不是放着不管：
+ * 旧键里存的是「中文主库 + 英文覆盖层」那个时期的配置。
+ * 占几 MB 只是小事 —— 真正的风险是它一旦被读到，
+ * 页面又冒出中文或英文。删干净最省事。
+ */
+function purgeLegacy() {
+  try {
+    LEGACY_KEYS.forEach((key) => window.localStorage.removeItem(key))
+  } catch {
+    /* 隐私模式：忽略 */
+  }
+}
 
 /** 内容指纹（djb2）：只用来判断「仓库里的正式内容有没有换过」 */
 function baseSignature(): string {
@@ -181,6 +209,8 @@ function readStored(): Loaded {
   if (typeof window === 'undefined') {
     return { saved: BASE_CONFIG, draft: BASE_CONFIG, baseChanged: false }
   }
+
+  purgeLegacy()
 
   let baseChanged = false
   try {
@@ -218,12 +248,12 @@ function readStored(): Loaded {
 /**
  * 配置读写的完整接口。
  *
- * 导出它是给语言层用的：LocaleProvider 会复制一份，
- * 只把 config 换成翻译版，增删改的函数原样透传 ——
- * 所以写进 localStorage 的永远是中文母版。
+ * 页面直接读 config；控制台改的也是同一份 ——
+ * 站点只有阿拉伯语，不再有「母版 / 译文」两层，
+ * 所以改完保存，页面立刻就是改后的样子。
  */
 export type Store = {
-  /** 当前正在编辑的内容（可能含未保存的草稿）—— 页面渲染读这个 */
+  /** 当前内容（可能含未保存的草稿）—— 页面渲染读这个 */
   config: SiteConfig
   /** 深路径更新，例如 set('brand.name', 'xx') */
   set: (path: string, value: unknown) => void
@@ -256,15 +286,7 @@ export type Store = {
   baseChanged: boolean
 }
 
-/**
- * 配置上下文。
- *
- * 导出它是为了语言层：LocaleProvider 会在内层再包一层，
- * 把 config 换成「当前语言」的版本。
- *
- * 于是页面组件照旧 useConfig()，拿到的就是翻译后的内容；
- * 控制台在语言层之外，拿到的仍然是中文主库 —— 改的永远是母版。
- */
+/** 配置上下文 */
 export const ConfigContext = createContext<Store | null>(null)
 
 function setPath<T>(obj: T, path: string, value: unknown): T {
@@ -353,16 +375,16 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     try {
       const parsed = JSON.parse(raw)
       if (!parsed || typeof parsed !== 'object') {
-        return { ok: false, error: '内容不是一个对象' }
+        return { ok: false, error: 'المحتوى ليس كائنًا' }
       }
       setConfig(merge(BASE_CONFIG, parsed))
       return { ok: true }
     } catch (e) {
-      return { ok: false, error: e instanceof Error ? e.message : 'JSON 解析失败' }
+      return { ok: false, error: e instanceof Error ? e.message : 'صيغة JSON غير صحيحة' }
     }
   }, [])
 
-    /* ── 保存（草稿 → 已保存）────────────────────────────── */
+  /* ── 保存（草稿 → 已保存）────────────────────────────── */
 
   /** 逐区块比对：只比这个区块自己的内容，别的标签改了不会连坐 */
   const isDirty = useCallback(
@@ -445,7 +467,8 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
 
 export function useConfig(): Store {
   const ctx = useContext(ConfigContext)
-  if (!ctx) throw new Error('useConfig 必须在 ConfigProvider 内使用')
+  // 开发者内部错误：访客正常使用永远碰不到，所以直接写阿语，别把中文带进构建产物
+  if (!ctx) throw new Error('useConfig يجب أن يُستخدم داخل ConfigProvider')
   return ctx
 }
 

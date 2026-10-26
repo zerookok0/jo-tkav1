@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { AmbientLayer } from './components/AmbientLayer'
 import { Header } from './components/Header'
 import { Hero } from './components/Hero'
@@ -8,17 +8,46 @@ import { Footer, MobileDock } from './components/Footer'
 import { InstallModal } from './components/InstallModal'
 import { Nearby } from './components/Nearby'
 import { NightChat } from './components/NightChat'
-import { Console } from './components/console/Console'
 import { useReveal } from './hooks/useReveal'
 import { initPixel, trackInnerAndGo, trackOuter } from './lib/pixel'
 import { ConfigProvider, themeVars, useConfig } from './config/store'
-import { LocaleProvider } from './i18n/LocaleProvider'
+import { DIR, HTML_LANG } from './config/locale'
+import { isAdminRoute } from './lib/adminRoute'
 import type { GateKey } from './config/defaults'
+
+/**
+ * 控制台按需加载。
+ *
+ * 为什么这么做：这个面板是中文的（给运营自己用），
+ * 而访客看到的是阿拉伯语站点。如果直接静态 import，
+ * 那一整包中文界面文案会打进首屏 JS —— 谁打开页面都下载一份，
+ * 只是不显示而已。用 lazy 切开，公开页面根本不会加载它。
+ *
+ * 触发条件只有一个：地址命中 /admin。
+ */
+const Console = lazy(() =>
+  import('./components/console/Console').then((m) => ({ default: m.Console })),
+)
 
 function Site() {
   useReveal()
   const { config } = useConfig()
   const [sheetOpen, setSheetOpen] = useState(false)
+
+  /**
+   * 语言与方向钉死在阿拉伯语。
+   *
+   * 为什么还要在运行时再写一次：
+   * 静态托管上有人会直接分享带 ?lang=en 的老链接，
+   * 或者浏览器装了自动翻译插件改写了 <html>。
+   * 这里强制写回，页面永远是从右往左的阿拉伯语。
+   */
+  useEffect(() => {
+    const root = document.documentElement
+    root.lang = HTML_LANG
+    root.dir = DIR
+    root.dataset.locale = HTML_LANG
+  }, [])
 
   /** Pixel 只在填了 ID 时才注入 */
   useEffect(() => {
@@ -113,23 +142,28 @@ function Site() {
 }
 
 /**
- * 层级顺序是有讲究的：
+ * 只有一个配置层，没有语言层。
  *
- *   ConfigProvider（中文主库）
- *     LocaleProvider（页面读「当前语言」）
- *       Site
- *     Console（编辑器读中文主库）
+ * 之前是 ConfigProvider → LocaleProvider 两层：页面读「译文」，
+ * 控制台读「母版」。站点只剩阿拉伯语之后，这一层就没有存在意义了 ——
+ * 它带来的只是「改了看不到变化」和「切到某种语言冒出另一种文字」。
  *
- * 控制台故意留在语言层外面 —— 切到英文后进控制台，
- * 里面看到的、改的仍然是中文母版，不会把英文存成正式内容。
+ * 现在页面和控制台读的是同一份内容，改完保存就生效。
+ *
+ * 控制台只在 /admin 下才挂载，而且走懒加载 ——
+ * 公开页面上既不会出现中文节点，也不会下载那部分代码。
  */
 export default function App() {
+  const admin = isAdminRoute()
+
   return (
     <ConfigProvider>
-      <LocaleProvider>
-        <Site />
-      </LocaleProvider>
-      <Console />
+      <Site />
+      {admin && (
+        <Suspense fallback={null}>
+          <Console />
+        </Suspense>
+      )}
     </ConfigProvider>
   )
 }

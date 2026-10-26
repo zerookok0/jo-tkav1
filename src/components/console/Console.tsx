@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { DataPanel, ConsolePanel, ConsoleTrigger, type TabKey } from './ConsolePanel'
+import { DataPanel, ConsolePanel, type TabKey } from './ConsolePanel'
 import {
   BrandEditor,
   HeroEditor,
@@ -23,8 +23,15 @@ import { exitAdminRoute, isAdminRoute } from '../../lib/adminRoute'
  * 进入：网址后加 /admin 或 #admin 或 ?admin
  * 退出：点面板右上角的关闭，地址会自动回到公开页面
  *
- * 公开页面默认看不到任何入口按钮；
- * 想临时用快捷键，可以在 src/config/admin.ts 里开 enableHotkey。
+ * ── 为什么这个面板不在公开页面的 DOM 里 ─────────────────────
+ *
+ * 面板本身是中文的（给运营自己看），而站点是面向约旦访客的阿拉伯语。
+ * 如果它一直挂在页面上、只是用 translate 移出屏幕，
+ * 那它仍然在 DOM 里：屏幕阅读器会读到一串中文，
+ * 浏览器的「查找」也能翻到这些字 —— 等于中文漏到了公开页面。
+ *
+ * 所以这里只在地址命中入口时才真正挂载，
+ * 平时 public 页面上一个中文节点都没有。
  */
 export function Console() {
   const [open, setOpen] = useState(isAdminRoute)
@@ -53,7 +60,7 @@ export function Console() {
     exitAdminRoute()
   }, [])
 
-  /** Ctrl / ⌘ + K：可选，默认开启但需要已登录态不存在 */
+  /** Ctrl / ⌘ + K：默认关闭，见 src/config/admin.ts */
   useEffect(() => {
     if (!ADMIN_ENTRY.enableHotkey) return
     const onKey = (e: KeyboardEvent) => {
@@ -78,11 +85,16 @@ export function Console() {
     }
   }, [open])
 
+  /**
+   * 没打开就直接不渲染。
+   *
+   * 这一步是「一点中文都不要出现」的最终保障：
+   * 不是隐藏，而是根本不进 DOM。
+   */
+  if (!open) return null
+
   return (
     <>
-      {/* 公开页面默认不显示悬浮按钮，只认网址入口 */}
-      {ADMIN_ENTRY.showFloatingTrigger && <ConsoleTrigger onOpen={() => setOpen(true)} />}
-
       <ConsolePanel
         open={open}
         onClose={close}

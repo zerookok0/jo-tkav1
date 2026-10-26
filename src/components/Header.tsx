@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react'
 import { ArrowUpRight, Download, Menu, X } from 'lucide-react'
 import { Wordmark } from './BrandSlot'
-import { LocaleSwitch } from './LocaleSwitch'
 import { useScrolledPast } from '../hooks/useReveal'
 import { useConfig } from '../config/store'
 
+/**
+ * 顶栏。
+ *
+ * 这里原本有一个语言切换器（ع / EN）。
+ * 站点只服务约旦本地用户、只有阿拉伯语，所以整个切换入口被拿掉了 ——
+ * 留着它只会让人误点，然后把整站切成另一种语言。
+ */
 export function Header({ onDownload }: { onDownload: () => void }) {
   const scrolled = useScrolledPast(20)
   const [open, setOpen] = useState(false)
@@ -45,7 +51,6 @@ export function Header({ onDownload }: { onDownload: () => void }) {
             </nav>
 
             <div className="flex items-center gap-2">
-              <LocaleSwitch />
               <button
                 type="button"
                 onClick={onDownload}
@@ -84,17 +89,14 @@ export function Header({ onDownload }: { onDownload: () => void }) {
         >
           <div className="flex items-center justify-between">
             <Wordmark />
-            <div className="flex items-center gap-2">
-              <LocaleSwitch compact />
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label={ui.closeMenu}
-                className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white/70"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label={ui.closeMenu}
+              className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white/70"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
 
           <nav className="mt-5 grid gap-1" aria-label={ui.mobileNav}>

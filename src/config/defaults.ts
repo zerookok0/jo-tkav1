@@ -49,11 +49,19 @@ export type DownloadConfig = {
   pixelId: string
 }
 
+/**
+ * 安装包信息。
+ *
+ * 全部写成阿拉伯语，不留拉丁字母：
+ *   · 版本号去掉「v」前缀 —— 那是英文写法，混在阿语句子里很扎眼
+ *   · 大小用「ميجابايت」而不是 MB
+ *   · 系统写成一句完整的话「أندرويد 8.0 أو أحدث」
+ */
 export const DEFAULT_DOWNLOAD: DownloadConfig = {
   apkUrl: 'https://example.com/app.apk',
-  version: 'v2.4.1',
-  size: '45 MB',
-  minAndroid: 'Android 8.0+',
+  version: '2.4.1',
+  size: '45 ميجابايت',
+  minAndroid: 'أندرويد 8.0 أو أحدث',
   pixelId: '',
 }
 
@@ -131,13 +139,11 @@ export type UiCopy = {
   close: string
   closeDialog: string
 
-  /* 品牌与语言 */
+  /* 品牌 */
   appIconAlt: string
   appIconPlaceholder: string
   appNamePlaceholder: string
   appNamePlaceholderHint: string
-  localeSwitchAria: string
-  localeMenuAria: string
 
   /* 顶栏与菜单 */
   backToTop: string
@@ -221,8 +227,6 @@ export const DEFAULT_UI: UiCopy = {
   appIconPlaceholder: 'موضع أيقونة التطبيق',
   appNamePlaceholder: 'اسم التطبيق',
   appNamePlaceholderHint: 'أدخل اسم التطبيق من «الهوية» في لوحة التحكم',
-  localeSwitchAria: 'اللغة: {label}',
-  localeMenuAria: 'اختر اللغة',
 
   backToTop: 'إلى الأعلى',
   openMenu: 'فتح القائمة',
@@ -300,7 +304,7 @@ export const DEFAULT_HERO: HeroConfig = {
   statusMid: 'لا يزال هناك',
   statusCount: '1,284',
   statusPost: 'شخصًا قريبًا منك لم يناموا',
-  trusted: ['داخل ٣ كم · لا تجاوز للمدينة', 'بوجه مخفي أو صوت معدّل'],
+  trusted: ['داخل 3 كم · لا تجاوز للمدينة', 'بوجه مخفي أو صوت معدّل'],
   note: 'ما جرّبته بالأعلى هو الواجهة الحقيقية — مرّر فقط. لا نعرف عند أي مقطع ستتوقف.',
   tabs: ['قريب', 'متابَعون', 'مقترح'],
   swipeHint: 'مرّر للأعلى والأسفل',
@@ -311,7 +315,7 @@ export const DEFAULT_HERO_SLIDES: HeroSlide[] = [
   {
     id: 'h1',
     kicker: '+18 · الآن · داخل ثلاثة كيلومترات',
-    title: 'ضوءُها ما زال مضاءً، على بعد ٤٨٠ مترًا.',
+    title: 'ضوءُها ما زال مضاءً، على بعد 480 مترًا.',
     sub: 'بلا إضافة صديق وبلا سلام محرج. مرّر لترى ما ترتديه هذه الليلة.',
   },
   {
@@ -409,7 +413,7 @@ export const DEFAULT_NEARBY_COPY = {
   eyebrow: 'حسب المسافة، لا حسب الشهرة',
   title: 'الآن، داخل ثلاثة كيلومترات.',
   sub: 'ليس ما اختاره لك الخوارزم. بل حسب المسافة، من الأقرب إلى الأبعد، واحدًا تلو الآخر.',
-  liveNote: '٤ أشخاص متصلون · يتحدّث',
+  liveNote: '4 أشخاص متصلون · يتحدّث',
   footnote: 'الأسماء والمسافات مُموّهة. الموقع الدقيق يظهر داخل التطبيق فقط',
   onlineLabel: 'متصل',
   recentLabel: 'قبل قليل',
@@ -460,7 +464,7 @@ export const DEFAULT_PEOPLE: PersonCard[] = [
     avatar:
       'https://images.pexels.com/photos/1382731/pexels-photo-1382731.jpeg?auto=compress&cs=tinysrgb&w=400&h=520&fit=crop',
     live: false,
-    tags: ['صوت مغيّر', 'قبل ٣ دقايق'],
+    tags: ['صوت مغيّر', 'قبل 3 دقايق'],
   },
   {
     id: 'p4',
@@ -499,7 +503,7 @@ export const DEFAULT_STEPS: StepItem[] = [
     id: 's1',
     icon: 'mapPin',
     title: 'شاهد ما حولك',
-    body: 'بمجرد الفتح ترى فيديو حيًا داخل ٣ كم، الأقرب أولًا. بلا متابعة أو صداقة.',
+    body: 'بمجرد الفتح ترى فيديو حيًا داخل 3 كم، الأقرب أولًا. بلا متابعة أو صداقة.',
   },
   {
     id: 's2',
@@ -520,7 +524,7 @@ export const DEFAULT_STEPS: StepItem[] = [
 export type ChatFeature = { icon: IconName; title: string; body: string }
 
 export const DEFAULT_CHAT_COPY = {
-  eyebrow: 'دردشة الساعة ٠١:٢٤',
+  eyebrow: 'دردشة الساعة 01:24',
   title: 'بعض الكلام يُقال فقط قبل أن تنام.',
   sub: 'هكذا تبدو الدردشة الحقيقية. تختفي بعد القراءة، فاللقطة يجب أن تكون سريعة.',
   features: [
@@ -554,7 +558,7 @@ export const DEFAULT_CHAT: ChatStory[] = [
       { id: 'l3', from: 'her', text: 'لسّه مخلّصة شوّر، شعري مبلول' },
       { id: 'l4', from: 'her', text: 'أبعثلك وحدة؟' },
       { id: 'l5', from: 'you', text: 'ابعثي' },
-      { id: 'l6', from: 'her', text: 'الصورة انفتحت · بتختفي بعد ٥ ثواني', system: true },
+      { id: 'l6', from: 'her', text: 'الصورة انفتحت · بتختفي بعد 5 ثواني', system: true },
       { id: 'l7', from: 'her', text: 'شفتها؟' },
       { id: 'l8', from: 'her', text: '…احكي شوي' },
     ],
@@ -601,7 +605,7 @@ export const DEFAULT_INSTALL_STEPS: InstallStep[] = [
   {
     id: 'i1',
     no: '01',
-    title: 'اضغط «تحميل» وانتظر ملف APK',
+    title: 'اضغط «تحميل» وانتظر ملف التثبيت',
     body: 'حوالي 45 ميجابايت — عشر ثوانٍ على الواي فاي. لا تغادر الصفحة أثناء التحميل.',
   },
   {
@@ -655,7 +659,7 @@ export const DEFAULT_FAQS: FaqItem[] = [
   {
     id: 'f4',
     q: 'هل يعمل على آيفون؟',
-    a: 'أندرويد فقط حاليًا. نسخة iOS ما زالت قيد المراجعة، احفظ الصفحة في المفضلة.',
+    a: 'أندرويد فقط حاليًا. نسخة الآيفون ما زالت قيد المراجعة، احفظ الصفحة في المفضلة.',
   },
   {
     id: 'f5',
@@ -682,7 +686,7 @@ export const DEFAULT_MODAL_COPY = {
   fixes: [
     {
       q: 'التحميل لا يستجيب؟',
-      a: 'بعض المتصفحات تحجب ملفات APK. افتح الصفحة في كروم أو متصفح النظام واضغط مرة أخرى.',
+      a: 'بعض المتصفحات تحجب ملفات التثبيت المباشرة. افتح الصفحة في كروم أو متصفح النظام واضغط مرة أخرى.',
     },
     {
       q: 'لم تجد الأيقونة بعد التثبيت؟',
@@ -714,7 +718,7 @@ export const DEFAULT_GATES: Record<GateKey, GateEntry> = {
   },
   comment: {
     title: 'التعليقات داخل التطبيق',
-    sub: 'تحت هذا المقطع أكثر من ٢٨٠٠ جملة لم تكتمل.',
+    sub: 'تحت هذا المقطع أكثر من 2800 جملة لم تكتمل.',
     cta: 'حمّل لتقرأها',
   },
   save: {

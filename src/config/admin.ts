@@ -18,6 +18,12 @@ export const ADMIN_ENTRY = {
   /** 公开页面上是否显示右下角悬浮按钮。默认 false：只认网址入口 */
   showFloatingTrigger: false,
 
-  /** 是否允许 Ctrl / ⌘ + K 快速打开（false = 完全只认网址） */
-  enableHotkey: true,
+  /**
+   * 是否允许 Ctrl / ⌘ + K 快速打开。
+   *
+   * 默认关掉：编辑器界面是中文的（给你自己用），
+   * 访客在页面上误按快捷键突然弹出一个中文面板，很突兀。
+   * 需要用的时候用网址进，或者把这里改成 true。
+   */
+  enableHotkey: false,
 }

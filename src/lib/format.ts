@@ -1,29 +1,70 @@
-export const formatCount = (n: number): string => {
+/**
+ * ════════════════════════════════════════════════════════════════
+ *  数字、距离、模板填充  ·  约旦本地写法
+ * ════════════════════════════════════════════════════════════════
+ *
+ *  为什么这些不能交给 toLocaleString 自己决定：
+ *  同一条 128400，在不同浏览器里会变成 128K / ١٢٨٬٤٠٠ / 12.8万，
+ *  和界面里其它数字的风格对不上。这里全部手写，输出稳定。
+ *
+ *  数字用拉丁数字（0-9）：约旦的社交应用普遍如此，
+ *  和手机状态栏、点赞数、距离放在一起才不跳。
+ */
+
+/**
+ * 按千分位加逗号：128400 → "128,400"
+ *
+ * 小数量级直接给准确值 —— 「128,400 个赞」比「128K」更有说服力。
+ */
+export const formatExact = (n: number): string => {
   if (!Number.isFinite(n)) return '0'
-  if (n >= 10000) {
-    const v = n / 10000
-    return `${v >= 100 ? Math.round(v) : v.toFixed(1).replace(/\.0$/, '')}w`
-  }
-  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k`
-  return String(n)
-}
-
-export const formatDistance = (km: number): string => {
-  if (!Number.isFinite(km) || km <= 0) return '0m'
-  return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`
-}
-
-export const formatMeters = (m: number): string => {
-  if (!Number.isFinite(m) || m <= 0) return '0m'
-  return m < 1000 ? `${Math.round(m)}m` : `${(m / 1000).toFixed(1)}km`
+  return Math.round(n)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
 /**
- * 模板填充：fill('距你 {distance}', { distance: '320m' })
+ * 大数缩写：128400 → "128.4 ألف"
  *
- * 为什么不直接字符串拼接：英文、阿拉伯语的词序和中文不同，
- * 把变量位置写死在模板里，翻译时才不用改代码。
- * 找不到的占位符原样保留，方便发现漏翻的键。
+ * 用阿拉伯语的「ألف」（千）而不是 K：
+ * 这个站是约旦人看的，英文字母混在阿语句子里很刺眼。
+ *
+ * 小数量级仍然给准确值，因为点赞数大不大，对信任感是有影响的。
+ */
+export const formatCount = (n: number): string => {
+  if (!Number.isFinite(n)) return '0'
+  if (n < 10_000) return formatExact(n)
+
+  const thousands = n / 1000
+  // 一万以上才缩写，且只在超过 100 千时取整，避免 "128.4" 太长
+  const text =
+    thousands >= 100
+      ? String(Math.round(thousands))
+      : thousands.toFixed(1).replace(/\.0$/, '')
+
+  return `${text} ألف`
+}
+
+/** 距离（公里）→ "620 م" / "1.2 كم" */
+export const formatDistance = (km: number): string => {
+  if (!Number.isFinite(km) || km <= 0) return '0 م'
+  return km < 1 ? `${Math.round(km * 1000)} م` : `${km.toFixed(1)} كم`
+}
+
+/** 距离（米）→ "320 م" / "1.1 كم" */
+export const formatMeters = (m: number): string => {
+  if (!Number.isFinite(m) || m <= 0) return '0 م'
+  return m < 1000 ? `${Math.round(m)} م` : `${(m / 1000).toFixed(1)} كم`
+}
+
+/**
+ * 模板填充：fill('يبعد عنك {distance}', { distance: '360 م' })
+ *
+ * 为什么不直接字符串拼接：
+ * 阿拉伯语的词序和中文、英文都不一样，而且介词要跟着词走 ——
+ * 把变量位置固定在模板里，改文案时才不用动代码。
+ *
+ * 找不到的占位符原样保留，方便一眼发现写错的键。
  */
 export const fill = (tpl: string, vars: Record<string, string | number>): string =>
   tpl.replace(/\{(\w+)\}/g, (whole, key: string) =>
