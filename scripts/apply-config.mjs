@@ -43,6 +43,7 @@ const KNOWN_KEYS = [
   'gates',
   'footer',
   'videos',
+  'ui',
 ]
 
 const HEADER = `/**

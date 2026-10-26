@@ -34,35 +34,34 @@ export type VideoItem = WithId & {
 const avatar = (id: number) =>
   `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&fit=crop`
 
-/** 可直接播放的示例源（已逐条验证过 206） */
-const CLIP_A = 'https://videos.pexels.com/video-files/7515915/7515915-hd_1080_1920_30fps.mp4'
-const CLIP_B = 'https://videos.pexels.com/video-files/8815559/8815559-hd_1080_1920_30fps.mp4'
-
 /**
  * ────────────────────────────────────────────────────────────────
- *  示例视频
+ *  手机里的短视频
  * ────────────────────────────────────────────────────────────────
  *
- *  ⚠️ 这里的链接只用于本地预览，正式上线请换成自己的视频。
+ *  这里是「唯一」的视频来源，写进代码、跟着 git 走。
+ *  控制台里改动只落在你自己浏览器的 localStorage，
+ *  不会影响线上 —— 要正式生效，只能改这个文件再部署。
  *
- *  为什么只放两条：
- *  之前铺了六条，其中四条 Pexels 源已经 404 了 —— 页面看起来像
- *  「一直在加载」，其实是根本没有可播的文件。
- *  与其留一堆坏链接，不如只放两条验证过能播的，
- *  剩下的由你在控制台里加自己的视频。
+ *  两条硬性要求：
+ *    · src 必须是能直接播的 .mp4 直链（不能是播放页、不能要登录）
+ *    · poster 必须是能直接打开的图片直链
  *
- *  也正因为这个，手机里现在加了「源失效」提示：
- *  以后再有链接挂掉，会明确写出来，而不是让你对着空白等。
+ *  四条视频的封面都是手工给的，所以不需要在控制台里抓帧。
+ *  poster 留空才会退回「取视频中段某一帧」那套逻辑。
+ *
+ *  文案已统一为阿拉伯语，与整站 RTL 版面一致。
+ *  原文案为西语 / 日语 / 中文，按原意逐条译成阿语。
  * ────────────────────────────────────────────────────────────────
  */
 export const DEFAULT_VIDEOS: VideoItem[] = [
   {
     id: 'v1',
-    src: CLIP_A,
-    poster: '',
+    src: 'https://smsupermarket.shop/Recog%C3%AD%20a%20Mi%20Cliente%20Favorito%20De%20DIDI%20Sin%20Sost%C3%A9n%20y%20Toco%20Mis%20Grand.mp4',
+    poster: 'https://smsupermarket.shop/%E6%91%A9%E6%89%98.png',
     name: 'رهف',
     avatar: avatar(415829),
-    caption: 'شارع عبدون الساعة وحدة بالليل. الهوا ألطف من النهار.',
+    caption: 'أوصلت زبوني المفضّل في «ديدي» بلا ستيان، ولمست كِبار صدري',
     tags: ['#عمّان_بالليل', '#أضواء_المدينة'],
     music: 'صوت أصلي · رهف',
     distanceKm: 0.62,
@@ -75,11 +74,11 @@ export const DEFAULT_VIDEOS: VideoItem[] = [
   },
   {
     id: 'v2',
-    src: CLIP_B,
-    poster: '',
+    src: 'https://smsupermarket.shop/%E3%83%94%E3%83%B3%E3%82%AF%E3%83%87%E3%82%A3%E3%83%AB%E3%83%89%E3%81%A7%E6%BD%AE%E5%90%B9%E3%81%8D%E3%82%AA%E3%83%8A%E3%83%8B%E3%83%BC%20-%20%E8%89%B2%E6%83%85%E7%9F%AD%E8%A7%86%E9%A2%91%20-%20Pornhub.mp4',
+    poster: 'https://smsupermarket.shop/%E5%B0%BF.png',
     name: 'زيد',
     avatar: avatar(1239291),
-    caption: 'اليوم 41 بالجيم. جسمي أضبط من المنبّه.',
+    caption: 'ديلدو وردي، نافورة، ولمة مع نفسي',
     tags: ['#التزام', '#تمرين'],
     music: 'تمرين · ميكس',
     distanceKm: 2.4,
@@ -92,11 +91,11 @@ export const DEFAULT_VIDEOS: VideoItem[] = [
   },
   {
     id: 'v3',
-    src: CLIP_A,
-    poster: '',
+    src: 'https://smsupermarket.shop/%E5%BF%99%E7%A2%8C%E7%9A%84%E5%8D%B0%E5%BA%A6%E9%9D%92%E5%B0%91%E5%B9%B4%E5%9C%A8%E6%9C%8B%E5%8F%8B%E9%9D%A2%E5%89%8D%E6%95%B2%E6%89%93%E5%9C%B0%E6%9D%BF%20-%20%E8%89%B2%E6%83%85%E7%9F%AD%E8%A7%86%E9%A2%91%20-%20Pornhub.mp4',
+    poster: 'https://smsupermarket.shop/%E5%8D%B0%E5%BA%A6.png',
     name: 'لمى',
     avatar: avatar(774909),
-    caption: 'سطح البيت بالجبيهة، كاسة شاي وولا شي على بالي.',
+    caption: 'مراهق هندي مشغول يدقّ على الأرض قدام أصحابه',
     tags: ['#هدوء_الليل', '#سطح_البيت'],
     music: 'ليل عمّان · إندي',
     distanceKm: 1.2,
@@ -109,11 +108,11 @@ export const DEFAULT_VIDEOS: VideoItem[] = [
   },
   {
     id: 'v4',
-    src: CLIP_B,
-    poster: '',
+    src: 'https://smsupermarket.shop/%E9%BA%A6%E5%BD%93%E5%8A%B3%E7%BB%8F%E7%90%86%E5%9C%A8%E6%B5%B4%E5%AE%A4%E9%87%8C%E6%80%A7%E4%BA%A4%20-%20%E8%89%B2%E6%83%85%E7%9F%AD%E8%A7%86%E9%A2%91%20-%20Pornhub.mp4',
+    poster: 'https://smsupermarket.shop/%E9%BA%A6%E5%BD%93%E5%8A%B3.png',
     name: 'دانة',
     avatar: avatar(1181686),
-    caption: 'الدوار السابع فاضي، والليل حسّه غير.',
+    caption: 'مدير «ماكدونالدز» ما عاد يقدر يستنى',
     tags: ['#عمّان', '#مشوار_ليلي'],
     music: 'دفّ الليل · إلكتروني',
     distanceKm: 1.8,

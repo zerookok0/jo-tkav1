@@ -15,14 +15,24 @@ export function AppIcon({ className = 'h-14 w-14' }: IconProps) {
   const ui = config.ui
 
   if (src) {
+    /**
+     * 用 object-contain 而不是 object-cover：
+     * 控制台里填的图标可能是方版 App 图标，也可能是一张横版 logo。
+     * cover 会把横版 logo 的左右两截切掉 —— 剩下的正好是半个品牌名。
+     * contain 则保证整张图完整可见：方图看不出区别，横图不会被裁。
+     */
     return (
-      <img
-        src={src}
-        alt={name ? fill(ui.appIconAlt, { name }) : ui.appIconPlaceholder}
-        loading="lazy"
-        decoding="async"
-        className={`${className} rounded-2xl object-cover ring-1 ring-white/15`}
-      />
+      <div
+        className={`${className} relative shrink-0 overflow-hidden rounded-2xl bg-white/[0.04] ring-1 ring-white/15`}
+      >
+        <img
+          src={src}
+          alt={name ? fill(ui.appIconAlt, { name }) : ui.appIconPlaceholder}
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-contain"
+        />
+      </div>
     )
   }
 
@@ -63,7 +73,25 @@ export function AppName({ className = '' }: IconProps) {
   const ui = config.ui
 
   if (name) {
-    return <span className={`font-semibold tracking-tight ${className}`}>{name}</span>
+    /**
+     * 拉丁字母的品牌名（NITE BANANA）和阿拉伯字母的排版规则不一样：
+     * · 阿语字腔连写，tracking-tight 才紧凑好看
+     * · 拉丁全大写需要放宽字距，否则挤成一团 —— 而且必须强制 LTR，
+     *   否则在 dir="rtl" 的页面里，两个单词的顺序和周围元素会错位
+     */
+    const isLatin = !/[\u0600-\u06FF]/.test(name)
+    return (
+      <span
+        dir={isLatin ? 'ltr' : undefined}
+        className={
+          isLatin
+            ? `font-semibold uppercase tracking-[0.16em] ${className}`
+            : `font-semibold tracking-tight ${className}`
+        }
+      >
+        {name}
+      </span>
+    )
   }
   return (
     <span
@@ -82,7 +110,7 @@ export function BrandText({ nameClass = 'text-[13px]' }: { nameClass?: string })
     <div className="leading-none">
       <AppName className={nameClass} />
       {config.brand.tagline && (
-        <p className="mt-1 text-[9.5px] font-medium uppercase tracking-[0.24em] text-white/30">
+        <p className="mt-1.5 text-[9.5px] font-medium uppercase tracking-[0.24em] text-white/30">
           {config.brand.tagline}
         </p>
       )}

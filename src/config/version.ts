@@ -15,7 +15,7 @@
  *  ⚠️ 这个值只允许往上加，不要改回去。
  */
 
-export const CONTENT_VERSION = 3
+export const CONTENT_VERSION = 6
 
 /** 本机存储的键名。版本号并进去，旧键自然失效 */
 export const STORAGE_KEYS = {
@@ -34,4 +34,8 @@ export const LEGACY_KEYS = [
   'nightyle.config.draft.v1',
   'nightyle.config.basesig.v1',
   'nightyle.locale.v1',
+  /* 第 3 版时期的本机覆盖：里面压着旧视频，留着只会把人拉回旧内容 */
+  'nightyle.3.saved',
+  'nightyle.3.draft',
+  'nightyle.3.basesig',
 ]

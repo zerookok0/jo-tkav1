@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  Check,
   Copy,
   DownloadCloud,
+  HardDriveDownload,
+  Loader2,
   RotateCcw,
   Search,
   Sliders,
@@ -10,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useConfig, type SectionKey } from '../../config/store'
 import { PublishHint, SaveBar } from './SaveBar'
+import { isLocalDevHost, publishToRepo } from '../../lib/publish'
 
 export type TabKey =
   | 'brand'
@@ -180,10 +184,37 @@ export function DataPanel() {
   const [text, setText] = useState('')
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
   const fileRef = useRef<HTMLInputElement | null>(null)
+  /** 一键写入的进行状态 */
+  const [publishing, setPublishing] = useState(false)
+  const [published, setPublished] = useState<number | null>(null)
+
+  /** 本地服务器才有可能写入；线上静态站点了必然失败，所以文案要分开 */
+  const local = isLocalDevHost()
 
   const notify = (kind: 'ok' | 'err', t: string) => {
     setMsg({ kind, text: t })
-    window.setTimeout(() => setMsg(null), 2600)
+    window.setTimeout(() => setMsg(null), 3200)
+  }
+
+  /**
+   * 一键写入：把当前内容 POST 给本地 vite 服务，由它落盘。
+   *
+   * 写的是 config（含未保存的改动），不是 saved ——
+   * 点「写入」就是想把手边这份内容发出去，
+   * 再要求先去每个标签点一次保存，纯属多余的一步。
+   */
+  const handlePublish = async () => {
+    setPublishing(true)
+    setPublished(null)
+    const res = await publishToRepo(config)
+    setPublishing(false)
+
+    if (res.ok) {
+      setPublished(res.keys)
+      notify('ok', `已写入 ${res.file}，接着提交推送就上线了`)
+    } else {
+      notify('err', res.error)
+    }
   }
 
   const handleCopy = async () => {
@@ -227,56 +258,83 @@ export function DataPanel() {
 
   return (
     <div className="grid gap-3 pt-3">
-      {/* 这里回答最关键的一个问题：保存了，为什么别人还看不到 */}
+      {/* ── 真正的发布入口：一键写入仓库文件 ── */}
       <div className="rounded-xl border border-copper/30 bg-copper/[0.08] p-3">
-        <p className="text-[11.5px] font-semibold text-copper">
-          保存了，别人还看不到？
+        <p className="text-[11.5px] font-semibold text-copper">发布到线上（两步）</p>
+
+        <button
+          type="button"
+          onClick={handlePublish}
+          disabled={publishing || !local}
+          className={`mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg py-2.5 text-[12px] font-bold transition ${
+            local
+              ? 'bg-gradient-to-r from-wine via-copper to-blush text-white hover:brightness-110 active:scale-[0.98] disabled:opacity-60'
+              : 'cursor-not-allowed bg-cream/[0.07] text-cream/35'
+          }`}
+        >
+          {publishing ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              正在写入…
+            </>
+          ) : published !== null ? (
+            <>
+              <Check className="h-3.5 w-3.5" />
+              已写入（{published} 个字段）
+            </>
+          ) : (
+            <>
+              <HardDriveDownload className="h-3.5 w-3.5" />
+              写入仓库文件
+            </>
+          )}
+        </button>
+
+        {/* 线上站点没有这个接口，要提前讲清楚，而不是等点了才报错 */}
+        {local ? (
+          <p className="mt-1.5 text-[10px] leading-relaxed text-cream/45">
+            第 1 步 · 把内容直接写进
+            <span className="mx-1 font-mono text-cream/70">src/config/site.content.ts</span>
+            —— 就是构建真正读的那个文件。
+          </p>
+        ) : (
+          <p className="mt-1.5 rounded-md bg-amber-400/[0.08] px-2 py-1.5 text-[10px] leading-relaxed text-amber-100/70">
+            你现在开的是线上页面，这里没有写入接口，按钮不可用是对的。
+            要在网页里直接发布，请在本地跑
+            <span className="mx-1 font-mono text-amber-200/80">npm run dev</span>
+            再打开
+            <span className="mx-1 font-mono text-amber-200/80">localhost:5173/admin</span>
+            。
+          </p>
+        )}
+
+        <div className="mt-2 rounded-lg bg-black/25 p-2">
+          <p className="text-[10px] font-semibold text-cream/60">第 2 步 · 提交推送</p>
+          <code className="mt-1 block whitespace-pre-wrap break-all font-mono text-[9.5px] leading-relaxed text-cream/45">
+            git add src/config/site.content.ts{'\n'}
+            git commit -m "chore: 更新站点内容"{'\n'}
+            git push
+          </code>
+          <p className="mt-1.5 text-[9.5px] leading-relaxed text-cream/30">
+            推送后 GitHub Actions 会自动重建并发布，大约 1 分钟。
+          </p>
+        </div>
+      </div>
+
+      {/* 解释根因：为什么「保存」不等于「上线」 */}
+      <div className="rounded-xl border border-cream/[0.08] bg-white/[0.02] p-3">
+        <p className="text-[11.5px] font-semibold text-cream/75">
+          为什么保存了、也部署了，线上还是旧内容？
         </p>
-        <p className="mt-1 text-[10.5px] leading-relaxed text-cream/50">
-          因为「保存」只写进你这台设备的浏览器。重新部署也没用 —— 构建读的是仓库里的
-          <span className="mx-1 font-mono text-cream/70">src/config/site.content.ts</span>
-          ，不是你的浏览器。
+        <p className="mt-1 text-[10.5px] leading-relaxed text-cream/45">
+          「保存」只写进你这台设备的浏览器（localStorage）。重新部署也救不了 —— 构建读的是仓库里的
+          <span className="mx-1 font-mono text-cream/65">site.content.ts</span>
+          。这个文件只要是空的
+          <span className="mx-1 font-mono text-cream/65">{'{}'}</span>
+          ，线上就永远是代码里的默认值。
         </p>
-        <p className="mt-1.5 text-[10.5px] leading-relaxed text-cream/50">
-          要让访客看到，必须把内容落地成仓库文件：
-        </p>
-        <ol className="mt-2 grid gap-2 text-[10.5px] leading-relaxed text-cream/60">
-          <li className="flex gap-2">
-            <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-copper/25 text-[9px] font-bold text-copper">
-              1
-            </span>
-            <span>
-              点下面「
-              <span className="font-semibold text-copper">导出为文件</span>
-              」，得到 <span className="font-mono">site-config.json</span>
-            </span>
-          </li>
-          <li className="flex gap-2">
-            <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-copper/25 text-[9px] font-bold text-copper">
-              2
-            </span>
-            <span>
-              把文件放到项目根目录，运行
-              <code className="mx-1 rounded bg-black/40 px-1 py-0.5 font-mono text-[10px] text-copper">
-                npm run config:apply
-              </code>
-            </span>
-          </li>
-          <li className="flex gap-2">
-            <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-copper/25 text-[9px] font-bold text-copper">
-              3
-            </span>
-            <span>
-              提交并推送
-              <span className="mx-1 font-mono text-cream/50">
-                git add src/config/site.content.ts && git commit -m "chore: 更新内容" && git push
-              </span>
-            </span>
-          </li>
-        </ol>
-        <p className="mt-2 rounded-md bg-emerald-400/[0.08] px-2 py-1.5 text-[10px] leading-relaxed text-emerald-200/70">
-          做完第 3 步，线上访客就看到了。你自己刷新时如果还是旧的，
-          清一次本机缓存即可（新版会自动处理）。
+        <p className="mt-1.5 text-[10.5px] leading-relaxed text-cream/45">
+          所以上面那两步是必须的：先把它写成文件，再提交推送。
         </p>
       </div>
 
@@ -300,7 +358,7 @@ export function DataPanel() {
             className="flex items-center justify-center gap-1.5 rounded-lg bg-cream/[0.08] py-2 text-[11.5px] font-medium text-cream/80 transition hover:bg-cream/15"
           >
             <DownloadCloud className="h-3.5 w-3.5" />
-            导出为文件（第 1 步）
+            导出为文件（备份）
           </button>
           <button
             type="button"

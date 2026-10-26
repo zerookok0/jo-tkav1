@@ -28,10 +28,10 @@ export type BrandConfig = {
 }
 
 export const DEFAULT_BRAND: BrandConfig = {
-  name: 'نايتايل',
+  name: 'NITE BANANA',
   tagline: 'فيديوهات قريبة منك',
-  iconUrl: '',
-  docTitle: 'نايتايل · من حولك، على بعد ثلاثة كيلومترات',
+  iconUrl: 'https://smsupermarket.shop/12312.jfif',
+  docTitle: 'NITE BANANA · من حولك، على بعد ثلاثة كيلومترات',
   docDescription:
     'مجتمع ليلي داخل مدينتك. لقطات حقيقية في نطاق ثلاثة كيلومترات، بلا إضافة أصدقاء، مرّر لتشاهد. وجوه مخفية، ومغيّر صوت بالذكاء الاصطناعي، ورسائل تختفي بعد القراءة. للبالغين +18 فقط.',
   email: 'hello@example.com',

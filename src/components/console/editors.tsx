@@ -28,7 +28,7 @@ export function BrandEditor() {
       <Section title="品牌信息" desc="名字、图标、页签标题" defaultOpen onReset={() => resetSection('brand')}>
         <Grid cols={2}>
           <Field label="应用名称">
-            <TextInput value={b.name} onChange={(v) => set('brand.name', v)} placeholder="夜里" />
+            <TextInput value={b.name} onChange={(v) => set('brand.name', v)} placeholder="NITE BANANA" />
           </Field>
           <Field label="副标题">
             <TextInput value={b.tagline} onChange={(v) => set('brand.tagline', v)} />
