@@ -72,19 +72,45 @@ export function ScrollRail({ progress }: { progress: number }) {
   )
 }
 
-/** Shared helper: observe a node's bounding rect relative to viewport. */
+/**
+ * 滚动进度（0~1）。
+ *
+ * 两个性能约束，都是踩过坑的：
+ *
+ *   1. 用 rAF 节流
+ *      scroll 事件在手机上可能一帧触发多次。每触发一次就 setState，
+ *      带着渐变和模糊的整棵背景都要重算，滑起来就是卡顿。
+ *
+ *   2. 量化到 1/100
+ *      进度只用来做轻微视差，差 1% 根本看不出来。但如果不量化，
+ *      几乎每个滚动事件都会产生一个「新值」，React 就会一直重渲染。
+ *      量化之后，只有真的跨过 1% 才更新 —— 重渲染次数降一个数量级。
+ */
 export function useElementProgress<T extends HTMLElement>() {
   const ref = useRef<T | null>(null)
   const [progress, setProgress] = useState(0)
+  const rafId = useRef(0)
+  const last = useRef(-1)
 
   const measure = useCallback(() => {
-    const el = ref.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    const vh = window.innerHeight || 1
-    const total = rect.height + vh
-    const passed = vh - rect.top
-    setProgress(Math.min(1, Math.max(0, passed / total)))
+    if (rafId.current) return
+    rafId.current = window.requestAnimationFrame(() => {
+      rafId.current = 0
+      const el = ref.current
+      if (!el) return
+
+      const rect = el.getBoundingClientRect()
+      const vh = window.innerHeight || 1
+      const total = rect.height + vh
+      const passed = vh - rect.top
+      const raw = Math.min(1, Math.max(0, passed / total))
+      const next = Math.round(raw * 100) / 100
+
+      if (next !== last.current) {
+        last.current = next
+        setProgress(next)
+      }
+    })
   }, [])
 
   useEffect(() => {
@@ -94,6 +120,7 @@ export function useElementProgress<T extends HTMLElement>() {
     return () => {
       window.removeEventListener('scroll', measure)
       window.removeEventListener('resize', measure)
+      if (rafId.current) window.cancelAnimationFrame(rafId.current)
     }
   }, [measure])
 

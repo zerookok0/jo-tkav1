@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Ambient, ScrollRail, useElementProgress } from './components/Ambient'
+import { AmbientLayer } from './components/AmbientLayer'
 import { Header } from './components/Header'
 import { Hero } from './components/Hero'
 import { Highlights, HowItWorks } from './components/Highlights'
@@ -19,7 +19,6 @@ function Site() {
   useReveal()
   const { config } = useConfig()
   const [sheetOpen, setSheetOpen] = useState(false)
-  const { ref, progress } = useElementProgress<HTMLDivElement>()
 
   /** Pixel 只在填了 ID 时才注入 */
   useEffect(() => {
@@ -73,9 +72,9 @@ function Site() {
   } as const
 
   return (
-    <div ref={ref} className="relative min-h-screen overflow-x-hidden bg-ink">
-      <Ambient progress={progress} active={0} />
-      <ScrollRail progress={progress} />
+    <div className="relative min-h-screen overflow-x-hidden bg-ink">
+      {/* 滚动进度只影响这一层，不带着整页重渲染 */}
+      <AmbientLayer />
 
       <a
         href="#nearby"

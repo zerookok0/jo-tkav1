@@ -3,8 +3,18 @@ import type { WithId } from './types'
 export type VideoItem = WithId & {
   /** 视频直链（.mp4） */
   src: string
-  /** 封面图，留空则取视频首帧 */
+  /** 封面图，留空则自动取视频中段某一帧 */
   poster: string
+  /**
+   * 抓帧得到的候选封面（dataURL）。
+   *
+   * 有了它，「封面图 URL」就不再需要你手工去找图 ——
+   * 在控制台点「抓 5 帧」，挑一张，写回 poster 即可。
+   *
+   * 存这里而不是 localStorage 单独一份，是为了跟着视频走：
+   * 换顺序、删视频，候选图不会错位。
+   */
+  frameOptions?: string[]
   name: string
   avatar: string
   caption: string

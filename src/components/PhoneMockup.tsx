@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Bookmark,
   ChevronUp,
@@ -35,15 +35,64 @@ export function PhoneMockup({ onGate }: Props) {
   const [gate, setGate] = useState<GateKey | null>(null)
   const [burst, setBurst] = useState(false)
   const lastTap = useRef(0)
+  /**
+   * 手机框是否已进入视口。
+   *
+   * 首屏在手机上通常要往下滚一段才看到手机，但视频区块在 DOM 里，
+   * 一渲染就开始拉流 —— 用户还在读标题，带宽已经被占住了。
+   * 等真的要看见它再开始，首屏就快得多。
+   */
+  const rootRef = useRef<HTMLDivElement | null>(null)
+  const [inView, setInView] = useState(false)
+  /** 滚动节流的闸门：一帧最多算一次 */
+  const rafId = useRef(0)
   /** 与首屏状态条共用同一份时钟快照 —— 两处永远显示同一分钟 */
   const now = useClock()
 
-  /** 滚动 → 计算当前是第几条 */
+  /**
+   * 滚动 → 计算当前是第几条。
+   *
+   * 用 rAF 节流：scroll 事件在手机上可能一帧好几次，
+   * 每次都 setState 会让整个列表重渲染，滑起来就是一顿一顿的。
+   */
   const handleScroll = useCallback(() => {
-    const el = scrollerRef.current
+    if (rafId.current) return
+    rafId.current = window.requestAnimationFrame(() => {
+      rafId.current = 0
+      const el = scrollerRef.current
+      if (!el) return
+      const next = Math.round(el.scrollTop / el.clientHeight)
+      setIndex((prev) => (prev === next ? prev : next))
+    })
+  }, [])
+
+  /** 卸载时取消未执行的帧，避免对已卸载组件 setState */
+  useEffect(() => () => {
+    if (rafId.current) window.cancelAnimationFrame(rafId.current)
+  }, [])
+
+  /** 进入视口再加载视频；不支持 IntersectionObserver 时直接放开 */
+  useEffect(() => {
+    const el = rootRef.current
     if (!el) return
-    const next = Math.round(el.scrollTop / el.clientHeight)
-    setIndex((prev) => (prev === next ? prev : next))
+
+    if (!('IntersectionObserver' in window)) {
+      setInView(true)
+      return
+    }
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setInView(true)
+          io.disconnect()
+        }
+      },
+      // 提前一点开始，滚到的时候基本已经就绪
+      { rootMargin: '300px 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
   }, [])
 
   /** 双击爱心 */
@@ -67,7 +116,7 @@ export function PhoneMockup({ onGate }: Props) {
     : ui.previewLabel
 
   return (
-    <div className="relative mx-auto w-full max-w-[420px]">
+    <div ref={rootRef} className="relative mx-auto w-full max-w-[420px]">
       {/* 手机背后的光晕 */}
       <div className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-brand/20 blur-[80px]" />
       <div className="pointer-events-none absolute inset-x-8 bottom-10 -z-10 h-40 rounded-full bg-accent/10 blur-[70px]" />
@@ -133,6 +182,8 @@ export function PhoneMockup({ onGate }: Props) {
                       item={item}
                       index={i}
                       active={i === index}
+                      /* 前后各预载一条，滑动过去就已经就绪；再远的等滑到再说 */
+                      near={inView && Math.abs(i - index) <= 1}
                       muted={muted}
                       badge18={config.hero.badge18}
                       onToggleMute={() => setMuted((m) => !m)}
@@ -211,6 +262,26 @@ export function PhoneMockup({ onGate }: Props) {
 
 /* ------------------------------------------------------------------ */
 
+/**
+ * 取封面帧的位置（0~1）。
+ *
+ * 为什么不直接用第 0 秒：很多视频开头是黑场、淡入，或者镜头还没对上焦，
+ * 拿首帧当封面，手机框里就是一片黑 —— 看着像加载失败。
+ *
+ * 两个约束：
+ *   1. 避开开头 12%（黑场与转场基本都在这段）
+ *   2. 按 id 派生，同一条视频每次都取同一帧 ——
+ *      否则一刷新就换张脸，像随机闪动
+ */
+function posterRatio(id: string): number {
+  let h = 5381
+  for (let i = 0; i < id.length; i += 1) h = ((h << 5) + h + id.charCodeAt(i)) | 0
+  const t = Math.abs(h % 1000) / 1000
+  return 0.12 + t * 0.68
+}
+
+/* ------------------------------------------------------------------ */
+
 function EmptyFeed() {
   const { config } = useConfig()
   return (
@@ -226,6 +297,7 @@ function FeedCard({
   item,
   index,
   active,
+  near,
   muted,
   badge18,
   onToggleMute,
@@ -234,15 +306,48 @@ function FeedCard({
   item: VideoItem
   index: number
   active: boolean
+  /** 当前、前一条、后一条 —— 只有这几条才真正挂 video */
+  near: boolean
   muted: boolean
   badge18: string
   onToggleMute: () => void
   onGate: (a: GateKey) => void
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  /** 只负责「停在中间某帧」当封面的那个 video */
+  const coverRef = useRef<HTMLVideoElement | null>(null)
   const ui = useConfig().config.ui
   const poster = safeImageUrl(item.poster)
   const avatar = safeImageUrl(item.avatar)
+
+  /** 这条的封面该停在哪一帧（按 id 派生，刷新也不变） */
+  const coverAt = useMemo(() => posterRatio(item.id), [item.id])
+
+  /**
+   * 封面帧：让视频自己 seek 到中间位置再停住。
+   *
+   * 手填了封面图就用图 —— 那是作者的选择，不覆盖。
+   * 没填才走这条路：避开 0 秒的黑场，取中段某一帧。
+   */
+  useEffect(() => {
+    const el = coverRef.current
+    if (!el || poster || !item.src || !near) return
+
+    let done = false
+    const seek = () => {
+      if (done) return
+      const d = el.duration
+      if (!Number.isFinite(d) || d <= 0) return
+      done = true
+      // 留点余量，别正好落在最后一帧（可能解码不出来）
+      el.currentTime = Math.min(d * coverAt, d - 0.15)
+    }
+
+    el.addEventListener('loadedmetadata', seek)
+    if (el.readyState >= 1) seek() // 元数据可能已经就绪
+
+    return () => el.removeEventListener('loadedmetadata', seek)
+  }, [item.src, coverAt, poster, near])
 
   /** 只让当前这条播放 */
   useEffect(() => {
@@ -259,7 +364,12 @@ function FeedCard({
 
   return (
     <article className="snap-start-always relative h-full w-full overflow-hidden bg-[#0c0c0e]">
-      {poster && (
+      {/*
+        封面层。
+        near 之外不挂 video：静态图先占位，滑到附近再换成真画面。
+        这一步是首屏变快的关键 —— 少了四五个 1080p 连接。
+      */}
+      {poster ? (
         <img
           src={poster}
           alt=""
@@ -269,21 +379,36 @@ function FeedCard({
           decoding="async"
           draggable={false}
         />
-      )}
-
-      {item.src ? (
+      ) : item.src && near ? (
         <video
-          ref={videoRef}
+          ref={coverRef}
           src={item.src}
-          poster={poster || undefined}
-          muted={muted}
-          loop
+          muted
           playsInline
-          preload={index < 2 ? 'metadata' : 'none'}
+          preload="metadata"
           aria-hidden="true"
+          tabIndex={-1}
           className="absolute inset-0 h-full w-full object-cover"
         />
       ) : (
+        /* 远端占位：渐变 + 昵称，不是黑块 */
+        <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_50%_35%,#2a2130,#0c0c0e_72%)]">
+          <span className="text-[11px] tracking-[0.2em] text-white/20">{item.name}</span>
+        </div>
+      )}
+
+      {item.src && near ? (
+        <video
+          ref={videoRef}
+          src={item.src}
+          muted={muted}
+          loop
+          playsInline
+          preload={active ? 'auto' : 'metadata'}
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : item.src ? null : (
         <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-ink to-ink/60">
           <span className="text-[11px] text-white/25">{ui.videoMissingSrc}</span>
         </div>

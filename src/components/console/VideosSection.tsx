@@ -1,6 +1,8 @@
-import { ArrowUpRight, ChevronDown, ChevronUp, Film } from 'lucide-react'
+import { ArrowUpRight, ChevronDown, ChevronUp } from 'lucide-react'
+import { VideoThumb } from './VideoThumb'
+import { CoverPicker } from './CoverPicker'
 import { useConfig } from '../../config/store'
-import { safeImageUrl, uid } from '../../lib/format'
+import { uid } from '../../lib/format'
 import {
   AddButton,
   Field,
@@ -57,7 +59,6 @@ export function VideosSection({
 
         <div className="grid gap-2">
           {videos.map((v, i) => {
-            const poster = safeImageUrl(v.poster)
             return (
               <ItemCard
                 key={v.id}
@@ -68,22 +69,7 @@ export function VideosSection({
               >
                 {/* 缩略图 + 排序 */}
                 <div className="flex gap-2">
-                  <div className="relative h-20 w-14 shrink-0 overflow-hidden rounded-lg bg-black/50 ring-1 ring-cream/10">
-                    {poster ? (
-                      <img
-                        src={poster}
-                        alt=""
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                          ;(e.currentTarget as HTMLImageElement).style.opacity = '0.15'
-                        }}
-                      />
-                    ) : (
-                      <span className="grid h-full w-full place-items-center text-cream/20">
-                        <Film className="h-4 w-4" />
-                      </span>
-                    )}
-                  </div>
+                  <VideoThumb item={v} className="h-20 w-14" />
 
                   <div className="flex min-w-0 flex-1 flex-col justify-between gap-1.5">
                     <p
@@ -130,10 +116,17 @@ export function VideosSection({
                   />
                 </Field>
 
-                <Field label="封面图 URL" hint="留空则用视频首帧">
+                {/*
+                  封面：可以抓帧挑一张，也可以自己贴 URL。
+                  选过之后就是静态图，手机上不再运行时取帧。
+                */}
+                <CoverPicker item={v} index={i} />
+
+                <Field label="封面图 URL（可选）" hint="也可以直接贴一张图">
                   <TextInput
-                    value={v.poster}
+                    value={v.poster.startsWith('data:') ? '' : v.poster}
                     onChange={(val) => set(`videos.${i}.poster`, val)}
+                    placeholder="https://…/cover.jpg"
                     mono
                   />
                 </Field>
@@ -230,6 +223,7 @@ export function VideosSection({
                   id: uid('vid'),
                   src: '',
                   poster: '',
+                  frameOptions: [],
                   name: '新视频',
                   avatar: '',
                   caption: '这条视频的文案。',
