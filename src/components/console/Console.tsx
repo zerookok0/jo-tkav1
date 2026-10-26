@@ -11,9 +11,9 @@ import {
   ChatEditor,
   HowEditor,
   InstallEditor,
-  VideosEditor,
 } from './editors2'
 import { UiEditor } from './editors3'
+import { VideosSection } from './VideosSection'
 import { ADMIN_ENTRY } from '../../config/admin'
 import { exitAdminRoute, isAdminRoute } from '../../lib/adminRoute'
 
@@ -97,7 +97,7 @@ export function Console() {
         {tab === 'how' && <HowEditor />}
         {tab === 'chat' && <ChatEditor />}
         {tab === 'install' && <InstallEditor />}
-        {tab === 'videos' && <VideosEditor />}
+        {tab === 'videos' && <VideosSection onlyVideos />}
         {tab === 'ui' && <UiEditor />}
         {tab === 'data' && <DataPanel />}
       </ConsolePanel>

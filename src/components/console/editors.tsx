@@ -15,6 +15,7 @@ import {
   TextInput,
   Toggle,
 } from './fields'
+import { VideosSection } from './VideosSection'
 
 /* ══════════════════════ 品牌 ══════════════════════ */
 
@@ -331,7 +332,15 @@ export function HeroEditor() {
             </Field>
           </Grid>
         </div>
+
+        <p className="mt-2 rounded-lg border border-copper/20 bg-copper/[0.06] px-2.5 py-2 text-[10px] leading-relaxed text-cream/45">
+          首屏右边手机框里上下滑的那几条短视频，就在下面「手机里的短视频」里换 ——
+          改完立刻能在手机里看到效果，不用切到别的标签。
+        </p>
       </Section>
+
+      {/* 手机框内的短视频：和「手机视频」标签是同一份数据 */}
+      <VideosSection />
     </div>
   )
 }

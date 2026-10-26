@@ -27,12 +27,12 @@ export const TABS: { key: TabKey; label: string }[] = [
   { key: 'brand', label: '品牌' },
   { key: 'theme', label: '配色' },
   { key: 'hero', label: '首屏' },
+  { key: 'videos', label: '手机视频' },
   { key: 'highlights', label: '亮点' },
   { key: 'nearby', label: '附近' },
   { key: 'how', label: '流程' },
   { key: 'chat', label: '私聊' },
   { key: 'install', label: '安装' },
-  { key: 'videos', label: '视频' },
   { key: 'ui', label: '界面文字' },
   { key: 'data', label: '数据' },
 ]
@@ -98,15 +98,15 @@ export function ConsolePanel({ open, onClose, tab, onTab, children }: Props) {
           </button>
         </div>
 
-        {/* 标签 */}
-        <div className="hide-scrollbar -mx-1 mt-3 flex gap-1 overflow-x-auto pb-0.5">
+        {/* 标签：换行铺开，每个都看得见（不靠隐藏滚动条藏到右边） */}
+        <div className="mt-3 flex flex-wrap gap-1">
           {TABS.map((t) => (
             <button
               key={t.key}
               type="button"
               onClick={() => onTab(t.key)}
               aria-current={tab === t.key}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-medium transition ${
+              className={`shrink-0 rounded-full px-2.5 py-1.5 text-[11.5px] font-medium transition ${
                 tab === t.key
                   ? 'bg-cream text-[#17090c]'
                   : 'bg-cream/[0.05] text-cream/50 hover:bg-cream/10 hover:text-cream/80'
