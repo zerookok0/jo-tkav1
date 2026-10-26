@@ -28,18 +28,43 @@ export type TabKey =
   | 'ui'
   | 'data'
 
-/** 每个标签对应一个可独立保存的区块 */
-export const TABS: { key: TabKey; label: string; section?: SectionKey }[] = [
-  { key: 'brand', label: '品牌', section: 'brand' },
-  { key: 'theme', label: '配色', section: 'theme' },
-  { key: 'hero', label: '首屏', section: 'hero' },
-  { key: 'videos', label: '手机视频', section: 'videos' },
-  { key: 'highlights', label: '亮点', section: 'highlights' },
-  { key: 'nearby', label: '附近', section: 'people' },
-  { key: 'how', label: '流程', section: 'steps' },
-  { key: 'chat', label: '私聊', section: 'chat' },
-  { key: 'install', label: '安装', section: 'installCopy' },
-  { key: 'ui', label: '界面文字', section: 'ui' },
+/**
+ * 每个标签对应哪些可独立保存的区块。
+ *
+ * 这里必须是数组，不能是单个区块 —— 这也是之前「填了 Pixel ID 却没存上」
+ * 的真正原因：
+ *
+ *   · 「品牌」标签里既有 brand，也有 download（APK 直链、版本、Pixel ID）
+ *   · 「安装」标签里横跨 installCopy / installSteps / safety / faqs /
+ *     modalCopy / gates / footer
+ *
+ * 以前只写一个 section，保存时只存那一个，其余改了也白改：
+ * 界面显示「已保存」，刷新就还原，而线上永远是旧的。
+ * 现在把每个标签真正改到的区块全部列出来，保存时逐个存。
+ */
+export const TABS: { key: TabKey; label: string; sections?: SectionKey[] }[] = [
+  { key: 'brand', label: '品牌', sections: ['brand', 'download', 'nav', 'buttons'] },
+  { key: 'theme', label: '配色', sections: ['theme'] },
+  { key: 'hero', label: '首屏', sections: ['hero', 'heroSlides'] },
+  { key: 'videos', label: '手机视频', sections: ['videos'] },
+  { key: 'highlights', label: '亮点', sections: ['highlightsCopy', 'highlights'] },
+  { key: 'nearby', label: '附近', sections: ['nearbyCopy', 'people'] },
+  { key: 'how', label: '流程', sections: ['howCopy', 'steps'] },
+  { key: 'chat', label: '私聊', sections: ['chatCopy', 'chat'] },
+  {
+    key: 'install',
+    label: '安装',
+    sections: [
+      'installCopy',
+      'installSteps',
+      'safety',
+      'faqs',
+      'modalCopy',
+      'gates',
+      'footer',
+    ],
+  },
+  { key: 'ui', label: '界面文字', sections: ['ui'] },
   { key: 'data', label: '数据' },
 ]
 
@@ -54,8 +79,9 @@ type Props = {
 export function ConsolePanel({ open, onClose, tab, onTab, children }: Props) {
   const bodyRef = useRef<HTMLDivElement | null>(null)
   const { isDirty } = useConfig()
-  /** 当前标签对应哪个区块 —— 底部保存栏跟着它走 */
-  const section = TABS.find((t) => t.key === tab)?.section
+  /** 当前标签覆盖的所有区块 —— 底部保存栏跟着它走 */
+  const sections = TABS.find((t) => t.key === tab)?.sections ?? []
+  const tabDirty = sections.some(isDirty)
 
   /** 切标签回到顶部 */
   useEffect(() => {
@@ -93,7 +119,7 @@ export function ConsolePanel({ open, onClose, tab, onTab, children }: Props) {
             </p>
             <h2 className="mt-1 text-[15px] font-bold text-cream">内容控制台</h2>
             <p className="mt-0.5 text-[10.5px] text-cream/35">
-              改完即时预览 · 点底部按钮保存
+              {tabDirty ? '这个标签有改动 · 点底部保存' : '改完即时预览 · 点底部按钮保存'}
             </p>
           </div>
           <button
@@ -110,7 +136,7 @@ export function ConsolePanel({ open, onClose, tab, onTab, children }: Props) {
         {/* 标签：换行铺开，每个都看得见；有未保存改动的标签带小圆点 */}
         <div className="mt-3 flex flex-wrap gap-1">
           {TABS.map((t) => {
-            const unsaved = t.section ? isDirty(t.section) : false
+            const unsaved = (t.sections ?? []).some(isDirty)
             return (
               <button
                 key={t.key}
@@ -146,7 +172,7 @@ export function ConsolePanel({ open, onClose, tab, onTab, children }: Props) {
       </div>
 
       {/* 每个标签自己的保存栏 */}
-      {section && <SaveBar section={section} />}
+      {sections.length > 0 && <SaveBar sections={sections} />}
     </aside>
   )
 }

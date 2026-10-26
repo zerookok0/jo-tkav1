@@ -9,7 +9,7 @@ import { InstallModal } from './components/InstallModal'
 import { Nearby } from './components/Nearby'
 import { NightChat } from './components/NightChat'
 import { useReveal } from './hooks/useReveal'
-import { initPixel, trackInnerAndGo, trackOuter } from './lib/pixel'
+import { initPixel, resetInnerGuard, trackInnerAndGo, trackOuter } from './lib/pixel'
 import { ConfigProvider, themeVars, useConfig } from './config/store'
 import { DIR, HTML_LANG } from './config/locale'
 import { isAdminRoute } from './lib/adminRoute'
@@ -61,10 +61,17 @@ function Site() {
     Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v))
   }, [config.theme])
 
-  /** 外层下载按钮 → InitiateCheckout */
+  /**
+   * 外层下载按钮 → InitiateCheckout。
+   *
+   * 每次打开都复位 Purchase 的防重标记：
+   * 上一次弹窗可能已经上报过、用户取消后又点了别处的下载，
+   * 那是一次新的下载意向，应该照常计数 —— 不能被上一次永久锁死。
+   */
   const openSheet = useCallback(
     (source: string) => {
       trackOuter(config.download.pixelId, source)
+      resetInnerGuard()
       setSheetOpen(true)
     },
     [config.download.pixelId],

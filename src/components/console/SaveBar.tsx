@@ -13,10 +13,18 @@ import { adminEntryUrl } from '../../lib/adminRoute'
  *   有改动    → 主按钮可用，角标亮起
  *   刚保存    → 打勾 + 时间，几秒后回到「已保存」
  *   无改动    → 主按钮禁用，避免误以为没生效
+ *
+ * 关键：一个标签往往改的不是一个区块。
+ * 「品牌」标签里同时有品牌信息和下载埋点（含 Pixel ID），
+ * 「安装」标签里横跨安装文案、步骤、弹窗、拦截弹窗、页脚五个区块。
+ *
+ * 以前这里只接收一个 section，于是点「保存」只存了其中一个 ——
+ * 你在「品牌」标签填的 Pixel ID 属于 download 区块，根本没被存进去，
+ * 界面却显示「已保存」，刷新就丢。所以现在收一个数组，逐个存。
  */
-export function SaveBar({ section }: { section: SectionKey }) {
+export function SaveBar({ sections }: { sections: SectionKey[] }) {
   const { isDirty, saveSection, discardSection, resetSectionToBase } = useConfig()
-  const dirty = isDirty(section)
+  const dirty = sections.some(isDirty)
   const [justSaved, setJustSaved] = useState(false)
   const [savedAt, setSavedAt] = useState<string>('')
 
@@ -28,7 +36,7 @@ export function SaveBar({ section }: { section: SectionKey }) {
   }, [justSaved])
 
   const handleSave = () => {
-    saveSection(section)
+    sections.forEach(saveSection)
     setSavedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
     setJustSaved(true)
   }
@@ -62,7 +70,7 @@ export function SaveBar({ section }: { section: SectionKey }) {
         {dirty && (
           <button
             type="button"
-            onClick={() => discardSection(section)}
+            onClick={() => sections.forEach(discardSection)}
             title="放弃这个标签下的改动，回到上次保存的内容"
             className="flex shrink-0 items-center gap-1.5 rounded-xl border border-cream/12 px-3 py-2.5 text-[12px] font-medium text-cream/55 transition hover:bg-cream/[0.07] hover:text-cream"
           >
@@ -89,7 +97,7 @@ export function SaveBar({ section }: { section: SectionKey }) {
           type="button"
           onClick={() => {
             if (window.confirm('把这个标签恢复成初始默认内容？会直接覆盖已保存的版本。')) {
-              resetSectionToBase(section)
+              sections.forEach(resetSectionToBase)
             }
           }}
           className="inline-flex shrink-0 items-center gap-1 text-[10px] text-cream/25 transition hover:text-red-300"
@@ -148,7 +156,7 @@ export function PublishHint() {
               {count}
             </span>
             <p className="flex-1 text-[10.5px] leading-tight text-amber-100/80">
-              {count} 个标签有未保存的改动
+              {count} 个区块有未保存的改动
             </p>
             <button
               type="button"
