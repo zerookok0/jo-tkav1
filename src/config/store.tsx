@@ -83,6 +83,9 @@ export type SiteConfig = {
   ui: UiCopy
 }
 
+/** 一个可独立保存的区块 = SiteConfig 的顶层键 */
+export type SectionKey = keyof SiteConfig
+
 export const DEFAULT_CONFIG: SiteConfig = {
   brand: DEFAULT_BRAND,
   download: DEFAULT_DOWNLOAD,
@@ -111,6 +114,9 @@ export const DEFAULT_CONFIG: SiteConfig = {
 }
 
 const STORAGE_KEY = 'nightyle.config.v1'
+
+/** 草稿（改了还没点保存的内容）单独存一份：刷新不丢，也不会污染已保存的内容 */
+const DRAFT_KEY = 'nightyle.config.draft.v1'
 
 /**
  * 深合并：保证新增字段能从默认值补上，
@@ -146,15 +152,67 @@ function merge<T>(base: T, patch: unknown): T {
  */
 export const BASE_CONFIG: SiteConfig = merge(DEFAULT_CONFIG, SITE_CONTENT)
 
-function loadConfig(): SiteConfig {
-  if (typeof window === 'undefined') return BASE_CONFIG
+/** 仓库基线内容的指纹：部署新内容后，它的值会变 */
+const BASE_SIG_KEY = 'nightyle.config.basesig.v1'
+
+/** 内容指纹（djb2）：只用来判断「仓库里的正式内容有没有换过」 */
+function baseSignature(): string {
+  const raw = JSON.stringify(SITE_CONTENT)
+  let h = 5381
+  for (let i = 0; i < raw.length; i += 1) {
+    h = ((h << 5) + h + raw.charCodeAt(i)) | 0
+  }
+  return String(h)
+}
+
+type Loaded = { saved: SiteConfig; draft: SiteConfig; baseChanged: boolean }
+
+/**
+ * 读取本机状态。
+ *
+ * 关键的一段在 baseChanged：
+ * 你跑完 `npm run config:apply` 并重新部署之后，仓库里的 SITE_CONTENT 变了，
+ * 但本机 localStorage 还压着旧的「已保存」和「草稿」。
+ * 如果不清掉，**你自己打开网站看到的还是旧内容**，会误以为部署没生效。
+ *
+ * 所以这里用内容指纹判断：指纹变了 = 线上正式内容更新过 → 丢掉本机旧覆盖。
+ */
+function readStored(): Loaded {
+  if (typeof window === 'undefined') {
+    return { saved: BASE_CONFIG, draft: BASE_CONFIG, baseChanged: false }
+  }
+
+  let baseChanged = false
+  try {
+    const sig = baseSignature()
+    const stored = window.localStorage.getItem(BASE_SIG_KEY)
+    if (stored && stored !== sig) {
+      window.localStorage.removeItem(STORAGE_KEY)
+      window.localStorage.removeItem(DRAFT_KEY)
+      baseChanged = true
+    }
+    window.localStorage.setItem(BASE_SIG_KEY, sig)
+  } catch {
+    /* 隐私模式：忽略 */
+  }
+
+  let saved = BASE_CONFIG
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) return BASE_CONFIG
-    return merge(BASE_CONFIG, JSON.parse(raw))
+    if (raw) saved = merge(BASE_CONFIG, JSON.parse(raw))
   } catch {
-    return BASE_CONFIG
+    saved = BASE_CONFIG
   }
+
+  let draft = saved
+  try {
+    const raw = window.localStorage.getItem(DRAFT_KEY)
+    if (raw) draft = merge(saved, JSON.parse(raw))
+  } catch {
+    draft = saved
+  }
+
+  return { saved, draft, baseChanged }
 }
 
 /**
@@ -165,16 +223,37 @@ function loadConfig(): SiteConfig {
  * 所以写进 localStorage 的永远是中文母版。
  */
 export type Store = {
+  /** 当前正在编辑的内容（可能含未保存的草稿）—— 页面渲染读这个 */
   config: SiteConfig
   /** 深路径更新，例如 set('brand.name', 'xx') */
   set: (path: string, value: unknown) => void
   update: (patch: Partial<SiteConfig>) => void
   reset: () => void
-  resetSection: (key: keyof SiteConfig) => void
+  resetSection: (key: SectionKey) => void
   replaceAll: (next: SiteConfig) => void
   exportJson: () => string
   importJson: (raw: string) => { ok: boolean; error?: string }
+
+  /* ── 保存：草稿 → 已保存 ───────────────────────────── */
+
+  /** 已保存的那份内容，用来判断某个区块改没改 */
+  saved: SiteConfig
+  /** 这个区块有没有还没保存的改动 */
+  isDirty: (key: SectionKey) => boolean
+  /** 所有有改动的区块 */
+  dirtySections: SectionKey[]
+  /** 保存单个区块 */
+  saveSection: (key: SectionKey) => void
+  /** 保存全部改动 */
+  saveAll: () => void
+  /** 撤销单个区块：回到上次保存的样子 */
+  discardSection: (key: SectionKey) => void
+  /** 把区块恢复成仓库基线并直接存下 */
+  resetSectionToBase: (key: SectionKey) => void
+  /** 整体是否有未保存改动 */
   dirty: boolean
+  /** 本机旧的覆盖已被清掉（说明部署了新内容）—— 用来提示用户 */
+  baseChanged: boolean
 }
 
 /**
@@ -203,14 +282,31 @@ function setPath<T>(obj: T, path: string, value: unknown): T {
 }
 
 export function ConfigProvider({ children }: { children: ReactNode }) {
-  const [config, setConfig] = useState<SiteConfig>(loadConfig)
+  /** 首次读取：已保存、草稿、以及「仓库正式内容是否刚换过」 */
+  const [initial] = useState(readStored)
+  /** 已保存的内容 —— 真正对访客生效的那份 */
+  const [saved, setSaved] = useState<SiteConfig>(initial.saved)
+  /** 正在编辑的内容（含未保存草稿）—— 页面读它，所以改完能即时预览 */
+  const [config, setConfig] = useState<SiteConfig>(initial.draft)
 
-  /** 持久化（失败不影响页面，只可能是隐私模式） */
+  /** 仓库内容更新过的提示：部署后你本机的旧覆盖已被自动清掉 */
+  const [baseChanged] = useState(initial.baseChanged)
+
+  /** 已保存内容落盘 */
   useEffect(() => {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved))
     } catch {
       /* ignore quota / private mode */
+    }
+  }, [saved])
+
+  /** 草稿落盘：没点保存就关掉页面，下次回来还能接着改 */
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(DRAFT_KEY, JSON.stringify(config))
+    } catch {
+      /* ignore */
     }
   }, [config])
 
@@ -231,16 +327,19 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     setConfig((prev) => merge(prev, patch))
   }, [])
 
+  /** 全部重置：草稿和已保存一起清空，否则刷新草稿又回来 */
   const reset = useCallback(() => {
     setConfig(BASE_CONFIG)
+    setSaved(BASE_CONFIG)
     try {
       window.localStorage.removeItem(STORAGE_KEY)
+      window.localStorage.removeItem(DRAFT_KEY)
     } catch {
       /* ignore */
     }
   }, [])
 
-  const resetSection = useCallback((key: keyof SiteConfig) => {
+  const resetSection = useCallback((key: SectionKey) => {
     setConfig((prev) => ({ ...prev, [key]: BASE_CONFIG[key] }))
   }, [])
 
@@ -263,11 +362,42 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  /** 和仓库里的正式内容不一致 = 有还没进 git 的草稿 */
-  const dirty = useMemo(
-    () => JSON.stringify(config) !== JSON.stringify(BASE_CONFIG),
+    /* ── 保存（草稿 → 已保存）────────────────────────────── */
+
+  /** 逐区块比对：只比这个区块自己的内容，别的标签改了不会连坐 */
+  const isDirty = useCallback(
+    (key: SectionKey) =>
+      JSON.stringify(config[key]) !== JSON.stringify(saved[key]),
+    [config, saved],
+  )
+
+  const dirtySections = useMemo(
+    () =>
+      (Object.keys(saved) as SectionKey[]).filter(
+        (key) => JSON.stringify(config[key]) !== JSON.stringify(saved[key]),
+      ),
+    [config, saved],
+  )
+
+  const saveSection = useCallback(
+    (key: SectionKey) => setSaved((prev) => ({ ...prev, [key]: config[key] })),
     [config],
   )
+
+  const saveAll = useCallback(() => setSaved(config), [config])
+
+  const discardSection = useCallback(
+    (key: SectionKey) => setConfig((prev) => ({ ...prev, [key]: saved[key] })),
+    [saved],
+  )
+
+  /** 恢复出厂：改回仓库基线并直接存下，否则刷新又回来 */
+  const resetSectionToBase = useCallback((key: SectionKey) => {
+    setConfig((prev) => ({ ...prev, [key]: BASE_CONFIG[key] }))
+    setSaved((prev) => ({ ...prev, [key]: BASE_CONFIG[key] }))
+  }, [])
+
+  const dirty = dirtySections.length > 0
 
   const value = useMemo<Store>(
     () => ({
@@ -279,9 +409,35 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
       replaceAll,
       exportJson,
       importJson,
+      saved,
+      isDirty,
+      dirtySections,
+      saveSection,
+      saveAll,
+      discardSection,
+      resetSectionToBase,
       dirty,
+      baseChanged,
     }),
-    [config, set, update, reset, resetSection, replaceAll, exportJson, importJson, dirty],
+    [
+      config,
+      set,
+      update,
+      reset,
+      resetSection,
+      replaceAll,
+      exportJson,
+      importJson,
+      saved,
+      isDirty,
+      dirtySections,
+      saveSection,
+      saveAll,
+      discardSection,
+      resetSectionToBase,
+      dirty,
+      baseChanged,
+    ],
   )
 
   return <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>

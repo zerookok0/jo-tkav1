@@ -8,7 +8,8 @@ import {
   UploadCloud,
   X,
 } from 'lucide-react'
-import { useConfig } from '../../config/store'
+import { useConfig, type SectionKey } from '../../config/store'
+import { PublishHint, SaveBar } from './SaveBar'
 
 export type TabKey =
   | 'brand'
@@ -23,17 +24,18 @@ export type TabKey =
   | 'ui'
   | 'data'
 
-export const TABS: { key: TabKey; label: string }[] = [
-  { key: 'brand', label: '品牌' },
-  { key: 'theme', label: '配色' },
-  { key: 'hero', label: '首屏' },
-  { key: 'videos', label: '手机视频' },
-  { key: 'highlights', label: '亮点' },
-  { key: 'nearby', label: '附近' },
-  { key: 'how', label: '流程' },
-  { key: 'chat', label: '私聊' },
-  { key: 'install', label: '安装' },
-  { key: 'ui', label: '界面文字' },
+/** 每个标签对应一个可独立保存的区块 */
+export const TABS: { key: TabKey; label: string; section?: SectionKey }[] = [
+  { key: 'brand', label: '品牌', section: 'brand' },
+  { key: 'theme', label: '配色', section: 'theme' },
+  { key: 'hero', label: '首屏', section: 'hero' },
+  { key: 'videos', label: '手机视频', section: 'videos' },
+  { key: 'highlights', label: '亮点', section: 'highlights' },
+  { key: 'nearby', label: '附近', section: 'people' },
+  { key: 'how', label: '流程', section: 'steps' },
+  { key: 'chat', label: '私聊', section: 'chat' },
+  { key: 'install', label: '安装', section: 'installCopy' },
+  { key: 'ui', label: '界面文字', section: 'ui' },
   { key: 'data', label: '数据' },
 ]
 
@@ -47,6 +49,9 @@ type Props = {
 
 export function ConsolePanel({ open, onClose, tab, onTab, children }: Props) {
   const bodyRef = useRef<HTMLDivElement | null>(null)
+  const { isDirty } = useConfig()
+  /** 当前标签对应哪个区块 —— 底部保存栏跟着它走 */
+  const section = TABS.find((t) => t.key === tab)?.section
 
   /** 切标签回到顶部 */
   useEffect(() => {
@@ -84,7 +89,7 @@ export function ConsolePanel({ open, onClose, tab, onTab, children }: Props) {
             </p>
             <h2 className="mt-1 text-[15px] font-bold text-cream">内容控制台</h2>
             <p className="mt-0.5 text-[10.5px] text-cream/35">
-              改完即时生效 · 自动保存到本机
+              改完即时预览 · 点底部按钮保存
             </p>
           </div>
           <button
@@ -98,30 +103,46 @@ export function ConsolePanel({ open, onClose, tab, onTab, children }: Props) {
           </button>
         </div>
 
-        {/* 标签：换行铺开，每个都看得见（不靠隐藏滚动条藏到右边） */}
+        {/* 标签：换行铺开，每个都看得见；有未保存改动的标签带小圆点 */}
         <div className="mt-3 flex flex-wrap gap-1">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => onTab(t.key)}
-              aria-current={tab === t.key}
-              className={`shrink-0 rounded-full px-2.5 py-1.5 text-[11.5px] font-medium transition ${
-                tab === t.key
-                  ? 'bg-cream text-[#17090c]'
-                  : 'bg-cream/[0.05] text-cream/50 hover:bg-cream/10 hover:text-cream/80'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+          {TABS.map((t) => {
+            const unsaved = t.section ? isDirty(t.section) : false
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => onTab(t.key)}
+                aria-current={tab === t.key}
+                className={`relative shrink-0 rounded-full px-2.5 py-1.5 text-[11.5px] font-medium transition ${
+                  tab === t.key
+                    ? 'bg-cream text-[#17090c]'
+                    : 'bg-cream/[0.05] text-cream/50 hover:bg-cream/10 hover:text-cream/80'
+                }`}
+              >
+                {t.label}
+                {unsaved && (
+                  <span
+                    title="有未保存的改动"
+                    className={`absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full ring-2 ${
+                      tab === t.key ? 'bg-wine ring-cream' : 'bg-blush ring-[#0d0d0f]'
+                    }`}
+                  />
+                )}
+              </button>
+            )
+          })}
         </div>
       </header>
 
+      <PublishHint />
+
       {/* 内容 */}
-      <div ref={bodyRef} className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-6 pt-1">
+      <div ref={bodyRef} className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-4 pt-1">
         {children}
       </div>
+
+      {/* 每个标签自己的保存栏 */}
+      {section && <SaveBar section={section} />}
     </aside>
   )
 }
@@ -206,25 +227,57 @@ export function DataPanel() {
 
   return (
     <div className="grid gap-3 pt-3">
-      <div className="rounded-xl border border-copper/25 bg-copper/[0.07] p-3">
-        <p className="text-[11.5px] font-semibold text-copper/90">改动还没上线？</p>
-        <p className="mt-1 text-[10.5px] leading-relaxed text-cream/40">
-          这里改的内容只存在你当前浏览器里，别人打开网址看不到。要让所有人都看到，按下面三步走：
+      {/* 这里回答最关键的一个问题：保存了，为什么别人还看不到 */}
+      <div className="rounded-xl border border-copper/30 bg-copper/[0.08] p-3">
+        <p className="text-[11.5px] font-semibold text-copper">
+          保存了，别人还看不到？
         </p>
-        <ol className="mt-2 grid gap-1.5 text-[10.5px] leading-relaxed text-cream/55">
-          <li className="flex gap-1.5">
-            <span className="shrink-0 text-copper/70">1.</span>
-            <span>点下面的「导出为文件」，得到 site-config.json</span>
+        <p className="mt-1 text-[10.5px] leading-relaxed text-cream/50">
+          因为「保存」只写进你这台设备的浏览器。重新部署也没用 —— 构建读的是仓库里的
+          <span className="mx-1 font-mono text-cream/70">src/config/site.content.ts</span>
+          ，不是你的浏览器。
+        </p>
+        <p className="mt-1.5 text-[10.5px] leading-relaxed text-cream/50">
+          要让访客看到，必须把内容落地成仓库文件：
+        </p>
+        <ol className="mt-2 grid gap-2 text-[10.5px] leading-relaxed text-cream/60">
+          <li className="flex gap-2">
+            <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-copper/25 text-[9px] font-bold text-copper">
+              1
+            </span>
+            <span>
+              点下面「
+              <span className="font-semibold text-copper">导出为文件</span>
+              」，得到 <span className="font-mono">site-config.json</span>
+            </span>
           </li>
-          <li className="flex gap-1.5">
-            <span className="shrink-0 text-copper/70">2.</span>
-            <span>把文件放到项目根目录，运行 npm run config:apply</span>
+          <li className="flex gap-2">
+            <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-copper/25 text-[9px] font-bold text-copper">
+              2
+            </span>
+            <span>
+              把文件放到项目根目录，运行
+              <code className="mx-1 rounded bg-black/40 px-1 py-0.5 font-mono text-[10px] text-copper">
+                npm run config:apply
+              </code>
+            </span>
           </li>
-          <li className="flex gap-1.5">
-            <span className="shrink-0 text-copper/70">3.</span>
-            <span>提交并推送，线上自动重新构建</span>
+          <li className="flex gap-2">
+            <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-copper/25 text-[9px] font-bold text-copper">
+              3
+            </span>
+            <span>
+              提交并推送
+              <span className="mx-1 font-mono text-cream/50">
+                git add src/config/site.content.ts && git commit -m "chore: 更新内容" && git push
+              </span>
+            </span>
           </li>
         </ol>
+        <p className="mt-2 rounded-md bg-emerald-400/[0.08] px-2 py-1.5 text-[10px] leading-relaxed text-emerald-200/70">
+          做完第 3 步，线上访客就看到了。你自己刷新时如果还是旧的，
+          清一次本机缓存即可（新版会自动处理）。
+        </p>
       </div>
 
       <div className="rounded-xl border border-cream/[0.08] bg-white/[0.02] p-3">
@@ -247,7 +300,7 @@ export function DataPanel() {
             className="flex items-center justify-center gap-1.5 rounded-lg bg-cream/[0.08] py-2 text-[11.5px] font-medium text-cream/80 transition hover:bg-cream/15"
           >
             <DownloadCloud className="h-3.5 w-3.5" />
-            导出为文件
+            导出为文件（第 1 步）
           </button>
           <button
             type="button"
@@ -300,7 +353,7 @@ export function DataPanel() {
             type="button"
             onClick={() => {
               reset()
-              notify('ok', '已恢复出厂设置')
+              notify('ok', '已恢复出厂设置，草稿也已清空')
             }}
             className="flex items-center justify-center gap-1.5 rounded-lg border border-red-400/25 py-2 text-[11.5px] font-medium text-red-300 transition hover:bg-red-500/15"
           >
