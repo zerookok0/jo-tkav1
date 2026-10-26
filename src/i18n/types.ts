@@ -1,11 +1,12 @@
 /**
  * 语言定义。
  *
- * 中文是主库（控制台里改的那份），英/阿只是「覆盖层」——
- * 它们不需要完整，缺什么就自动回落到中文。
+ * 站点面向约旦市场：只提供阿拉伯语（默认，RTL）与英语两种。
+ * 中文仍然留在代码里作为「主库默认值」，但不再是一种可选语言，
+ * 访客永远不会看到中文界面。
  */
 
-export const LOCALES = ['zh', 'en', 'ar'] as const
+export const LOCALES = ['ar', 'en'] as const
 
 export type Locale = (typeof LOCALES)[number]
 
@@ -25,14 +26,14 @@ export type LocaleMeta = {
 }
 
 export const LOCALE_META: Record<Locale, LocaleMeta> = {
-  zh: {
-    code: 'zh',
-    label: '简体中文',
-    short: '中',
-    htmlLang: 'zh-CN',
-    dir: 'ltr',
-    ogLocale: 'zh_CN',
-    intl: 'zh-CN',
+  ar: {
+    code: 'ar',
+    label: 'العربية',
+    short: 'ع',
+    htmlLang: 'ar',
+    dir: 'rtl',
+    ogLocale: 'ar_JO',
+    intl: 'ar-JO-u-nu-latn',
   },
   en: {
     code: 'en',
@@ -43,19 +44,10 @@ export const LOCALE_META: Record<Locale, LocaleMeta> = {
     ogLocale: 'en_US',
     intl: 'en-US',
   },
-  ar: {
-    code: 'ar',
-    label: 'العربية',
-    short: 'ع',
-    htmlLang: 'ar',
-    dir: 'rtl',
-    ogLocale: 'ar_AR',
-    intl: 'ar-u-nu-latn',
-  },
 }
 
-/** 认不出用户语言时用哪个 */
-export const FALLBACK_LOCALE: Locale = 'zh'
+/** 认不出用户语言时用哪个 —— 约旦市场，默认阿拉伯语 */
+export const FALLBACK_LOCALE: Locale = 'ar'
 
 export const isLocale = (v: unknown): v is Locale =>
   typeof v === 'string' && (LOCALES as readonly string[]).includes(v)
@@ -63,8 +55,9 @@ export const isLocale = (v: unknown): v is Locale =>
 /**
  * 浏览器语言 → 站点语言。
  *
- * 只看主语言标签（zh-CN、ar-EG、en-GB 都能认），
+ * 只看主语言标签（ar-JO、ar-EG、en-GB 都能认），
  * 用户手动切过之后就以手动为准（存在 localStorage）。
+ * 除英语以外的任何语言，一律落到阿拉伯语。
  */
 export function detectLocale(): Locale {
   if (typeof navigator === 'undefined') return FALLBACK_LOCALE
@@ -78,7 +71,8 @@ export function detectLocale(): Locale {
     const tag = String(raw || '').toLowerCase().trim()
     if (!tag) continue
     const base = tag.split('-')[0]
-    if (isLocale(base)) return base
+    if (base === 'en') return 'en'
+    if (base === 'ar') return 'ar'
   }
 
   return FALLBACK_LOCALE

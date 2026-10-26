@@ -88,7 +88,7 @@ export function InstallModal({ open, onClose, onConfirm }: Props) {
 
         <div className="hide-scrollbar overflow-y-auto px-5 pb-5 pt-6 sm:px-7 sm:pb-7">
           {/* 标题 */}
-          <div className="flex items-start gap-3 pr-10">
+          <div className="flex items-start gap-3 pe-10">
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand/15 ring-1 ring-brand/30">
               <Download className="h-4 w-4 text-brand2" />
             </span>
@@ -209,7 +209,7 @@ export function InstallModal({ open, onClose, onConfirm }: Props) {
             >
               <Download className="h-4 w-4" />
               {config.buttons.modalConfirm}
-              <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+              <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
             </button>
           </div>
           {copy.legal && (
@@ -231,7 +231,7 @@ function QuickFix({ q, a }: { q: string; a: string }) {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left"
+        className="flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-start"
       >
         <span className="text-[11.5px] font-medium text-white/70">{q}</span>
         <ChevronDown

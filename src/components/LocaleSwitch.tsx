@@ -8,10 +8,11 @@ import { fill } from '../lib/format'
 /**
  * 语言切换器。
  *
- * 收起时只显示当前语言的短码（中 / EN / ع），
+ * 收起时只显示当前语言的短码（ع / EN），
  * 点开是一张竖排菜单，每项都用该语言自己的写法 —— 用户永远认得出自己的语言。
  *
- * 键盘可用：Esc 关闭、方向键在项间移动、Tab 移出时自动收起。
+ * 站点只有阿拉伯语与英语两种，默认阿拉伯语。
+ * 键盘可用：Esc 关闭、Tab 移出时自动收起。
  */
 export function LocaleSwitch({ compact = false }: { compact?: boolean }) {
   const { locale, setLocale } = useLocale()

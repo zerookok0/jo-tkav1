@@ -94,12 +94,14 @@
     font-family: 'Noto Sans Arabic', 'Inter', system-ui, sans-serif;
   }
 
+  /* 标题也要走阿语字面：.font-display 是西文衬线，阿语会落到系统默认字体上 */
   html[lang='ar'] h1,
   html[lang='ar'] h2,
-  html[lang='ar'] h3 {
-    font-family: 'Noto Sans Arabic', 'Noto Serif SC', serif;
+  html[lang='ar'] h3,
+  html[lang='ar'] h4 {
+    font-family: 'Noto Sans Arabic', 'Inter', system-ui, sans-serif;
     font-feature-settings: normal;
-    line-height: 1.5;
+    line-height: 1.55;
   }
 
   html[lang='ar'] p,
@@ -110,11 +112,47 @@
     line-height: 1.85;
   }
 
-  /* 阿语里不该有「字间距拉开」的效果，会断字 */
+  /* 阿语没有大小写，uppercase 只是空操作，但会让人误以为有效果 */
   html[lang='ar'] .eyebrow,
   html[lang='ar'] .tracking-wider-cn {
-    letter-spacing: 0.02em;
+    text-transform: none;
+    letter-spacing: 0.01em;
   }
+}
+
+/* ── 阿语连写：不许有字距 ──
+   阿拉伯字母是连写的，一旦加了 letter-spacing，
+   「نايتايل」会被拆成互不相连的孤立字母 —— 不是难看，是直接读不出来。
+
+   Tailwind v3 的 tracking-* 直接输出 letter-spacing 字面量（不是变量），
+   所以只能在这里统一点掉。写在 @layer 外面：
+   未分层的声明优先于所有 @layer（含 utilities），
+   组件里的 tracking-[0.3em] 在阿语下自动失效，英文完全不受影响。 */
+html[lang='ar'],
+html[lang='ar'] :where(*) {
+  letter-spacing: normal !important;
+}
+
+/* 字距归零后，全大写留下的空档会显得松散，一并关掉 */
+html[lang='ar'] .eyebrow {
+  text-transform: none;
+  font-weight: 600;
+}
+
+/* ── 方向性图标镜像 ──
+   阿语从右往左读，箭头也要跟着反过来：
+   「→ 下一步」在阿语里必须朝左，否则整条动线是反的。
+
+   用独立的 scale 属性而不是 transform：
+   transform 会被 Tailwind 的 translate / group-hover 动画整个覆盖，
+   而 scale 是另一条属性，两者互不干扰。
+   lucide-react 会给每个图标挂 lucide-<name> 类，这里按名字点。 */
+html[dir='rtl'] .lucide-arrow-right,
+html[dir='rtl'] .lucide-arrow-up-right,
+html[dir='rtl'] .lucide-chevron-right,
+html[dir='rtl'] .lucide-arrow-left,
+html[dir='rtl'] .lucide-chevron-left {
+  scale: -1 1;
 }
 
 @layer components {

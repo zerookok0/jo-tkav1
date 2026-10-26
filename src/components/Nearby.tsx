@@ -1,4 +1,4 @@
-import { ArrowUpRight, MapPin, MessageCircle } from 'lucide-react'
+import { ArrowUpRight, Download, Lock, MapPin, MessageCircle } from 'lucide-react'
 import { useConfig } from '../config/store'
 import { fill, formatMeters, safeImageUrl } from '../lib/format'
 
@@ -10,6 +10,11 @@ type Props = {
 export function Nearby({ onChat }: Props) {
   const { config } = useConfig()
   const { nearbyCopy, people, ui } = config
+  /** 模糊强度：0 或非法值都退回默认，避免传进样式里变成 NaN */
+  const blurPx = Number.isFinite(nearbyCopy.blurPx)
+    ? Math.max(0, Math.min(60, nearbyCopy.blurPx))
+    : 24
+  const locked = blurPx > 0
 
   return (
     <section id="nearby" className="relative py-16 sm:py-24">
@@ -67,7 +72,22 @@ export function Nearby({ onChat }: Props) {
                       alt={fill(ui.avatarAlt, { name: p.name, age: p.age })}
                       loading="lazy"
                       decoding="async"
-                      className="h-full w-full scale-[1.02] object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.09]"
+                      /*
+                        模糊强度走配置：改一个数，四张卡一起变。
+
+                        为什么用 CSS filter 而不是盖一层半透明色块：
+                        色块看起来像图片加载失败，用户会以为图是坏的；
+                        模糊一看就知道「这是故意藏起来的」，才会去找解锁入口。
+
+                        锁定状态下图片额外放大到 1.14 —— 模糊会让四周边缘发虚，
+                        不留这点余量，卡片边上会露出一圈透明的缝。
+                      */
+                      style={locked ? { filter: `blur(${blurPx}px)` } : undefined}
+                      className={`h-full w-full object-cover transition-transform duration-[1400ms] ease-out ${
+                        locked
+                          ? 'scale-[1.14] group-hover:scale-[1.2]'
+                          : 'scale-[1.02] group-hover:scale-[1.09]'
+                      }`}
                     />
                   ) : (
                     <div className="grid h-full w-full place-items-center bg-gradient-to-br from-wine/40 via-surface to-ink text-[13px] text-cream/25">
@@ -76,6 +96,42 @@ export function Nearby({ onChat }: Props) {
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/25 to-transparent" />
                   <div className="absolute inset-0 bg-gradient-to-br from-wine/20 via-transparent to-transparent mix-blend-soft-light" />
+
+                  {/*
+                    锁定层。
+
+                    放什么、不放什么，是有取舍的：
+                      · 先说「已模糊处理」—— 避免用户以为图加载失败
+                      · 再给「下载解锁」—— 明确动作，而不是只把图糊掉
+                      · 不放价格和条件 —— 这一层只负责让他想看清，转化交给弹窗
+
+                    整张卡本身已经可点（点了就开下载弹窗），
+                    所以这里的「下载解锁」只是一个视觉提示，不再套一层按钮 ——
+                    按钮套按钮会让键盘出现两个焦点，反而更难用。
+                  */}
+                  {locked && (
+                    <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-2.5 px-4 text-center">
+                      <span className="grid h-11 w-11 place-items-center rounded-full border border-cream/20 bg-black/45 text-copper backdrop-blur-sm transition duration-500 group-hover:border-copper/50 group-hover:bg-copper/20 group-hover:text-white">
+                        <Lock className="h-[18px] w-[18px]" />
+                      </span>
+
+                      <div className="rounded-xl bg-black/35 px-2.5 py-1.5 backdrop-blur-sm">
+                        <p className="text-[12px] font-semibold leading-snug text-cream/90">
+                          {nearbyCopy.blurTitle}
+                        </p>
+                        {nearbyCopy.blurBody && (
+                          <p className="mt-0.5 text-[10.5px] leading-relaxed text-cream/50">
+                            {nearbyCopy.blurBody}
+                          </p>
+                        )}
+                      </div>
+
+                      <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-wine via-copper to-blush px-3 py-1.5 text-[10.5px] font-bold text-white shadow-glow transition group-hover:brightness-110">
+                        <Download className="h-3 w-3" />
+                        {nearbyCopy.blurCta}
+                      </span>
+                    </div>
+                  )}
 
                   {/* 距离 */}
                   <div className="absolute start-3 top-3 inline-flex items-center gap-1 rounded-full border border-cream/15 bg-black/40 px-2.5 py-1 backdrop-blur">
@@ -148,7 +204,7 @@ export function Nearby({ onChat }: Props) {
         )}
 
         {/* 第二屏底部引导 → 第三屏聊天 */}
-        <div className="reveal mt-10 flex flex-col items-center gap-4 rounded-3xl border border-cream/[0.08] bg-gradient-to-br from-wine/[0.14] via-surface/60 to-ink px-6 py-8 text-center sm:flex-row sm:justify-between sm:text-left">
+        <div className="reveal mt-10 flex flex-col items-center gap-4 rounded-3xl border border-cream/[0.08] bg-gradient-to-br from-wine/[0.14] via-surface/60 to-ink px-6 py-8 text-center sm:flex-row sm:justify-between sm:text-start">
           <div>
             <p className="text-[15px] font-semibold text-cream">{ui.bridgeTitle}</p>
             <p className="mt-1.5 text-[12.5px] leading-relaxed text-cream/45">

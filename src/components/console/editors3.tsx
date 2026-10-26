@@ -38,6 +38,10 @@ const FEED_ROWS: TextRow[] = [
   { key: 'feedRegionAria', label: '视频区朗读' },
   { key: 'previewLabel', label: '预览说明' },
   { key: 'previewDistance', label: '预览距离' },
+  { key: 'previewQualityNote', label: '画质说明' },
+  { key: 'videoLoading', label: '视频加载中' },
+  { key: 'videoLoadingHint', label: '加载中补充说明' },
+  { key: 'videoLoadingSlow', label: '加载慢时的提示' },
   { key: 'ageOnly', label: '仅限成年' },
   { key: 'officialBadge', label: '官方角标' },
   { key: 'appSummary', label: '应用简介' },
@@ -87,7 +91,11 @@ function Rows({ rows, hint }: { rows: TextRow[]; hint?: string }) {
           key={row.key}
           label={row.label}
           hint={hint}
-          wide={row.key === 'emptyFeedBody' || row.key === 'bridgeBody'}
+          wide={
+            row.key === 'emptyFeedBody' ||
+            row.key === 'bridgeBody' ||
+            row.key === 'previewQualityNote'
+          }
         >
           <TextInput
             value={String(config.ui[row.key] ?? '')}

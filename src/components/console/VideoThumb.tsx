@@ -92,12 +92,19 @@ export function VideoThumb({
     )
   }
 
-  /* 兜底 */
+  /* 兜底：链接坏了、或没填 —— 明确标出「失效」，别让人以为是加载慢 */
   return (
     <div
-      className={`grid shrink-0 place-items-center overflow-hidden rounded-lg bg-black/50 text-cream/20 ring-1 ring-cream/10 ${className}`}
+      className={`grid shrink-0 place-items-center overflow-hidden rounded-lg bg-black/50 ring-1 ${
+        src && failed ? 'ring-amber-400/40' : 'ring-cream/10'
+      } ${className}`}
+      title={src && failed ? '视频链接加载失败（404 或格式不支持）' : '还没有视频'}
     >
-      <Film className="h-4 w-4" />
+      {src && failed ? (
+        <span className="text-[8px] font-semibold leading-tight text-amber-300/80">失效</span>
+      ) : (
+        <Film className="h-4 w-4 text-cream/20" />
+      )}
     </div>
   )
 }

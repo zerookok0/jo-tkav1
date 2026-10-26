@@ -192,7 +192,7 @@ export function NightChat({ onStart }: Props) {
                   type="button"
                   onClick={onStart}
                   aria-label={ui.chatInputAria}
-                  className="group flex w-full items-center gap-2 rounded-full border border-cream/[0.08] bg-cream/[0.03] px-3.5 py-2.5 text-left transition hover:border-copper/40 hover:bg-copper/[0.08]"
+                  className="group flex w-full items-center gap-2 rounded-full border border-cream/[0.08] bg-cream/[0.03] px-3.5 py-2.5 text-start transition hover:border-copper/40 hover:bg-copper/[0.08]"
                 >
                   <span className="flex-1 truncate text-[12px] text-cream/30 transition group-hover:text-cream/50">
                     {chatCopy.inputPlaceholder}

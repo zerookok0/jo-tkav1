@@ -28,14 +28,14 @@ export type BrandConfig = {
 }
 
 export const DEFAULT_BRAND: BrandConfig = {
-  name: '夜里',
-  tagline: '附近短视频',
+  name: 'نايتايل',
+  tagline: 'فيديوهات قريبة منك',
   iconUrl: '',
-  docTitle: '夜里 · 三公里内，此刻还没睡的人',
+  docTitle: 'نايتايل · من حولك، على بعد ثلاثة كيلومترات',
   docDescription:
-    '深夜才上线的同城私域。三公里内的真实画面，不用加好友，划到就看得到。支持匿名出镜、AI 变声、看完即焚。仅限 18 岁以上。',
+    'مجتمع ليلي داخل مدينتك. لقطات حقيقية في نطاق ثلاثة كيلومترات، بلا إضافة أصدقاء، مرّر لتشاهد. وجوه مخفية، ومغيّر صوت بالذكاء الاصطناعي، ورسائل تختفي بعد القراءة. للبالغين +18 فقط.',
   email: 'hello@example.com',
-  copyright: '保留所有权利',
+  copyright: 'جميع الحقوق محفوظة',
 }
 
 /* ══════════════════════════ 下载与埋点 ══════════════════════════ */
@@ -82,10 +82,10 @@ export const DEFAULT_THEME: ThemeConfig = {
 /* ══════════════════════════ 导航 ══════════════════════════ */
 
 export const DEFAULT_NAV: NavItem[] = [
-  { id: 'n1', label: '看视频', href: '#top' },
-  { id: 'n2', label: '附近的人', href: '#nearby' },
-  { id: 'n3', label: '开始聊天', href: '#chat' },
-  { id: 'n4', label: '下载', href: '#install' },
+  { id: 'n1', label: 'الفيديوهات', href: '#top' },
+  { id: 'n2', label: 'قريبون منك', href: '#nearby' },
+  { id: 'n3', label: 'المحادثة', href: '#chat' },
+  { id: 'n4', label: 'التحميل', href: '#install' },
 ]
 
 /** 顶部与各处的按钮文字 */
@@ -103,16 +103,17 @@ export type ButtonCopy = {
 }
 
 export const DEFAULT_BUTTONS: ButtonCopy = {
-  headerCta: '免费下载',
-  heroCta: '进来看一眼',
-  heroSecondary: '先看看有谁',
-  phoneEndTitle: '预览到这里就结束啦',
-  phoneEndBody: '下载 App 解锁完整推荐流，还有你附近 3km 的实时更新。',
-  phoneEndCta: '免费下载',
-  dockCta: '下载',
-  installCta: '免费下载 App',
-  modalCancel: '取消',
-  modalConfirm: '我已了解，开始下载',
+  headerCta: 'تحميل مجاني',
+  heroCta: 'ألقِ نظرة',
+  heroSecondary: 'من الموجود حولك',
+  phoneEndTitle: 'هنا ينتهي العرض التجريبي',
+  phoneEndBody:
+    'حمّل التطبيق لفتح الموجز الكامل، ومحتوى حيّ داخل ثلاثة كيلومترات منك.',
+  phoneEndCta: 'تحميل مجاني',
+  dockCta: 'تحميل',
+  installCta: 'حمّل التطبيق مجانًا',
+  modalCancel: 'إلغاء',
+  modalConfirm: 'فهمت، ابدأ التحميل',
 }
 
 /* ══════════════════════════ 界面文字 ══════════════════════════ */
@@ -152,9 +153,33 @@ export type UiCopy = {
   feedRegionAria: string
   previewLabel: string
   previewDistance: string
+  /**
+   * 手机框下方那行「画质说明」。
+   *
+   * 为什么单独留一个字段，而不是写死在组件里：
+   * 这句话的分寸很容易踩偏 —— 说重了像在黑自己的网页版，
+   * 说轻了又没有说服力。留个可编辑位，你随时能调。
+   */
+  previewQualityNote: string
+  /**
+   * 视频加载中的提示。
+   *
+   * 为什么单独留字段：这是「留人」的一句话。
+   * 视频慢一秒，用户就想走 —— 但屏幕上什么都不写，
+   * 他分不清是「在加载」还是「坏了」，只会关掉页面。
+   * 写出来，他就愿意多等这几秒。
+   */
+  videoLoading: string
+  videoLoadingHint: string
+  /** 超过 6 秒还没起来时换的补充说明 */
+  videoLoadingSlow: string
   emptyFeedTitle: string
   emptyFeedBody: string
   videoMissingSrc: string
+  /** 视频源失效（404 / 打不开）时的标题 */
+  videoBrokenTitle: string
+  /** 失效说明与修复指引 */
+  videoBrokenBody: string
   unmute: string
   mute: string
   likeAria: string
@@ -188,61 +213,68 @@ export type UiCopy = {
 }
 
 export const DEFAULT_UI: UiCopy = {
-  skipToContent: '跳到主要内容',
-  close: '关闭',
-  closeDialog: '关闭弹窗',
+  skipToContent: 'تخطَّ إلى المحتوى',
+  close: 'إغلاق',
+  closeDialog: 'إغلاق النافذة',
 
-  appIconAlt: '{name} 图标',
-  appIconPlaceholder: '应用图标占位',
-  appNamePlaceholder: '应用名称',
-  appNamePlaceholderHint: '在控制台的「品牌」里填入应用名称',
-  localeSwitchAria: '语言：{label}',
-  localeMenuAria: '选择语言',
+  appIconAlt: 'أيقونة {name}',
+  appIconPlaceholder: 'موضع أيقونة التطبيق',
+  appNamePlaceholder: 'اسم التطبيق',
+  appNamePlaceholderHint: 'أدخل اسم التطبيق من «الهوية» في لوحة التحكم',
+  localeSwitchAria: 'اللغة: {label}',
+  localeMenuAria: 'اختر اللغة',
 
-  backToTop: '回到顶部',
-  openMenu: '打开菜单',
-  closeMenu: '关闭菜单',
-  mainNav: '主导航',
-  mobileNav: '移动端导航',
+  backToTop: 'إلى الأعلى',
+  openMenu: 'فتح القائمة',
+  closeMenu: 'إغلاق القائمة',
+  mainNav: 'التنقل الرئيسي',
+  mobileNav: 'تنقل الهاتف',
 
-  slideDot: '切换到第 {n} 条文案',
+  slideDot: 'انتقل إلى الشريحة {n}',
 
-  feedRegionAria: '短视频预览，可上下滑动切换',
-  previewLabel: '真实界面预览',
-  previewDistance: '距你 {distance}',
-  emptyFeedTitle: '还没有视频',
-  emptyFeedBody: '打开控制台的「视频」标签，添加第一条视频链接',
-  videoMissingSrc: '未填写视频链接',
-  unmute: '开启声音',
-  mute: '静音',
-  likeAria: '点赞，需下载 App',
-  commentAria: '评论，需下载 App',
-  saveAria: '收藏，需下载 App',
-  shareAria: '分享，需下载 App',
-  ageOnly: '{age} · 仅限成年用户',
-  officialBadge: '官方版',
-  appSummary: '附近视频 · 一键上传 · 实时互动',
-  moreComments: '更多评论需下载 App',
-  gateLegal: '继续即表示同意用户协议 · 本应用仅限 18 岁以上',
+  feedRegionAria: 'معاينة فيديو قصير، مرّر للأعلى والأسفل',
+  previewLabel: 'معاينة الواجهة الحقيقية',
+  previewDistance: 'يبعد عنك {distance}',
+  previewQualityNote: 'نسخة الويب مضغوطة لتوفير البيانات · التطبيق يعرض الأصل',
+  videoLoading: 'الفيديو قيد التحميل',
+  videoLoadingHint: 'نسخة الويب تحتاج وقتًا — التطبيق يبدأ فورًا',
+  videoLoadingSlow: 'الاتصال بطيء، ما زال التحميل جاريًا…',
+  emptyFeedTitle: 'لا فيديوهات بعد',
+  emptyFeedBody: 'افتح تبويب «الفيديوهات» في لوحة التحكم وأضف أول رابط',
+  videoMissingSrc: 'لا يوجد رابط فيديو',
+  videoBrokenTitle: 'هالمقطع ما زبط يفتح',
+  videoBrokenBody:
+    'الرابط يمكن صار قديم (404)، أو إنه مش ملف .mp4 مباشر. بدّله من تبويب «فيديوهات الهاتف».',
+  unmute: 'تشغيل الصوت',
+  mute: 'كتم الصوت',
+  likeAria: 'إعجاب — يحتاج التطبيق',
+  commentAria: 'تعليق — يحتاج التطبيق',
+  saveAria: 'حفظ — يحتاج التطبيق',
+  shareAria: 'مشاركة — يحتاج التطبيق',
+  ageOnly: '{age} · للبالغين فقط',
+  officialBadge: 'رسمي',
+  appSummary: 'فيديو الجوار · رفع بلمسة · تفاعل حيّ',
+  moreComments: 'مزيد من التعليقات في التطبيق',
+  gateLegal: 'بالمتابعة توافق على الشروط · للبالغين +18 فقط',
   commentSamples: [
-    { name: '小满', text: '这个角度也太好看了吧' },
-    { name: 'Nova', text: '求定位！想去同款地方' },
+    { name: 'رهف', text: 'هاي الزاوية كثير حلوة' },
+    { name: 'زيد', text: 'وين هالمكان؟ بدي أروح' },
   ],
 
-  cardAria: '和 {name} 打个招呼，需下载 App',
-  avatarAlt: '{name}，{age} 岁',
-  sayHi: '打个招呼',
-  noAvatar: '未设置头像',
-  bridgeTitle: '看中了哪一位？直接开口就行。',
-  bridgeBody: '文字、语音、照片都能发。她看完即焚，聊不下去随时关掉。',
-  bridgeCta: '进去聊两句',
+  cardAria: 'سلّم على {name} — يحتاج التطبيق',
+  avatarAlt: '{name}، {age}',
+  sayHi: 'سلّم عليه',
+  noAvatar: 'بلا صورة',
+  bridgeTitle: 'اخترت أحدهم؟ قل كلمتك إذن.',
+  bridgeBody: 'نص أو صوت أو صورة. تختفي بمجرد أن تراها، وتستطيع الإغلاق في أي وقت.',
+  bridgeCta: 'ادخل وتحدّث قليلًا',
 
-  chatInputAria: '继续聊天需要下载 App',
-  chatContinueCta: '继续聊下去 · 免费下载',
+  chatInputAria: 'أكمل المحادثة في التطبيق',
+  chatContinueCta: 'أكمل المحادثة · تحميل مجاني',
 
-  metaVersion: '版本',
-  metaSize: '大小',
-  metaSystem: '系统',
+  metaVersion: 'الإصدار',
+  metaSize: 'الحجم',
+  metaSystem: 'النظام',
 }
 
 /* ══════════════════════════ 首屏 ══════════════════════════ */
@@ -264,29 +296,29 @@ export type HeroConfig = {
 }
 
 export const DEFAULT_HERO: HeroConfig = {
-  statusPre: '现在',
-  statusMid: '你附近还有',
+  statusPre: 'الآن',
+  statusMid: 'لا يزال هناك',
   statusCount: '1,284',
-  statusPost: '个人没睡',
-  trusted: ['三公里内 · 不跨城', '可匿名出镜 · 声音可变'],
-  note: '上面是真的界面 —— 直接上下滑。看到第几条会忍不住，我们也不知道',
-  tabs: ['附近', '关注', '推荐'],
-  swipeHint: '上下滑动切换',
-  badge18: '18+',
+  statusPost: 'شخصًا قريبًا منك لم يناموا',
+  trusted: ['داخل ٣ كم · لا تجاوز للمدينة', 'بوجه مخفي أو صوت معدّل'],
+  note: 'ما جرّبته بالأعلى هو الواجهة الحقيقية — مرّر فقط. لا نعرف عند أي مقطع ستتوقف.',
+  tabs: ['قريب', 'متابَعون', 'مقترح'],
+  swipeHint: 'مرّر للأعلى والأسفل',
+  badge18: '+18',
 }
 
 export const DEFAULT_HERO_SLIDES: HeroSlide[] = [
   {
     id: 'h1',
-    kicker: '18+ · 此刻 · 三公里内',
-    title: '离你 480 米的地方，她的灯还亮着。',
-    sub: '不用加好友，也不用打招呼。划过去，就看见她今晚穿的是什么。',
+    kicker: '+18 · الآن · داخل ثلاثة كيلومترات',
+    title: 'ضوءُها ما زال مضاءً، على بعد ٤٨٠ مترًا.',
+    sub: 'بلا إضافة صديق وبلا سلام محرج. مرّر لترى ما ترتديه هذه الليلة.',
   },
   {
     id: 'h2',
-    kicker: '18+ · 深夜才上线',
-    title: '凌晨一点，有人比你更不想睡。',
-    sub: '这些人不会出现在白天的推荐里。她们只在夜里出现，也只在夜里消失。',
+    kicker: '+18 · يظهرون ليلًا فقط',
+    title: 'في الواحدة صباحًا، أحدهم لا يريد النوم أكثر منك.',
+    sub: 'هؤلاء لا يظهرون في اقتراحات النهار. يأتون مع الليل، ويرحلون معه.',
   },
 ]
 
@@ -307,120 +339,140 @@ export type HighlightsConfig = {
   }
 }
 
-/** 标题被拆成三段：前缀 + 渐变高亮 + 后缀，方便单独改色块 */
 export const DEFAULT_HIGHLIGHTS_COPY: HighlightsConfig = {
-  eyebrow: '为什么值得装',
-  title: '你可能就是为了',
-  titleHighlight: '其中一条',
-  titleTail: '才点进来的。',
-  sub: '下面这五条，是用户真正在用的功能 —— 不是宣传语。',
+  eyebrow: 'لماذا تستحق التثبيت',
+  title: 'غالبًا جئت من أجل',
+  titleHighlight: 'واحدة من هذه',
+  titleTail: '.',
+  sub: 'هذه الخمس هي ما يستخدمه الناس فعلًا — لا شعارات تسويقية.',
   featured: {
-    badge: '隐私优先',
+    badge: 'الخصوصية أولًا',
     points: [
-      '声音可换成男/女/童声或完全自定义',
-      '录视频与语音连麦时实时生效',
-      '不露脸也能出镜，画面只保留动作',
+      'غيّر صوتك إلى ذكر أو أنثى أو طفل أو صوت مخصص',
+      'يعمل مباشرة أثناء التسجيل أو المكالمة الصوتية',
+      'اظهر بلا وجه — يبقى الحركة فقط',
     ],
-    meterTitle: '变声器',
-    meterStatus: '使用中',
-    meterOptions: ['偏低', '中性', '偏高'],
+    meterTitle: 'مغيّر الصوت',
+    meterStatus: 'يعمل',
+    meterOptions: ['منخفض', 'متوسط', 'مرتفع'],
   },
 }
 
+/** 标题被拆成三段：前缀 + 渐变高亮 + 后缀，方便单独改色块 */
 export const DEFAULT_HIGHLIGHTS: HighlightItem[] = [
   {
     id: 'hl1',
     icon: 'sparkles',
-    title: '完全免费',
-    body: '下载安装不要钱，看视频、私聊、发作品，核心功能没有任何会员墙。',
+    title: 'مجاني تمامًا',
+    body: 'التحميل والتثبيت بلا مقابل. المشاهدة والدردشة والنشر بلا أي جدار دفع.',
   },
   {
     id: 'hl2',
     icon: 'wifi',
-    title: '不烧流量',
-    body: '连着 Wi-Fi 自动缓存附近内容，出门用流量也能顺畅刷十几条。',
+    title: 'لا يستهلك بياناتك',
+    body: 'يخزّن مقاطع الجوار على الواي فاي، فتتصفح عشرات المقاطع ببيانات الهاتف.',
   },
   {
     id: 'hl3',
     icon: 'mapPin',
-    title: '看到附近的异性',
-    body: '按真实距离排序，最近的一位可能就在三百米外，滑到就能打个招呼。',
+    title: 'شاهد من حولك',
+    body: 'مرتّب حسب المسافة الحقيقية. أقرب شخص قد يكون على بعد ثلاثمئة متر فقط.',
   },
   {
     id: 'hl4',
     icon: 'flame',
-    title: '阅后即焚',
-    body: '私聊里的照片和语音，对方看完即销毁，不会留在对面手机里。',
+    title: 'تختفي بعد القراءة',
+    body: 'الصور والرسائل الصوتية في الدردشة الخاصة تُحذف بعد المشاهدة، ولا تبقى على هاتف أحد.',
   },
   {
     id: 'hl5',
     icon: 'mic',
-    title: '内置 AI 变声器',
-    body: '一键把声音换成别人认不出的样子，录视频、连麦都能用。想露脸就露脸，想藏住就藏住。',
+    title: 'مغيّر صوت بالذكاء الاصطناعي',
+    body: 'بلمسة واحدة يصبح صوتك غير معروف — أثناء التسجيل أو المكالمة. أظهر وجهك أو أخفه.',
     featured: true,
   },
 ]
 
 /* ══════════════════════════ 附近的人 ══════════════════════════ */
 
+/**
+ * 附近区块的文案。
+ *
+ * 下半段那四个字段是「头像锁」用的：
+ * 网页上所有真人头像一律模糊，卡片上盖一句说明 + 一个下载入口。
+ *
+ * 为什么模糊强度也做成字段：
+ * 太轻，能看出是谁，等于没锁；太重，整张卡糊成一块色块，很难看。
+ * 留个可调值，你可以在控制台里拖到「看得出是个人、但认不出是谁」的那一档。
+ */
 export const DEFAULT_NEARBY_COPY = {
-  eyebrow: '按距离排出，不按热度',
-  title: '此刻，三公里内。',
-  sub: '不是推荐算法给你的。是按距离，从近到远，一个接一个。',
-  liveNote: '4 个人在线 · 持续更新',
-  footnote: '名字与距离已经过模糊处理。真实位置只有 App 里才看得到',
-  onlineLabel: '在线',
-  recentLabel: '刚刚',
+  eyebrow: 'حسب المسافة، لا حسب الشهرة',
+  title: 'الآن، داخل ثلاثة كيلومترات.',
+  sub: 'ليس ما اختاره لك الخوارزم. بل حسب المسافة، من الأقرب إلى الأبعد، واحدًا تلو الآخر.',
+  liveNote: '٤ أشخاص متصلون · يتحدّث',
+  footnote: 'الأسماء والمسافات مُموّهة. الموقع الدقيق يظهر داخل التطبيق فقط',
+  onlineLabel: 'متصل',
+  recentLabel: 'قبل قليل',
+
+  /* 头像锁定层 */
+  /** 锁标下面那行标题 */
+  blurTitle: 'الصور مُموّهة',
+  /** 紧跟着的一句解释 */
+  blurBody: 'حمّل التطبيق لترى شكلها',
+  /** 金色小按钮上的字 */
+  blurCta: 'حمّل للفتح',
+  /** 模糊强度（px）。0 = 关闭模糊，恢复原图 */
+  blurPx: 24,
 }
 
 export const DEFAULT_PEOPLE: PersonCard[] = [
   {
     id: 'p1',
-    name: '小满',
+    name: 'رهف',
     age: 24,
     meters: 320,
-    now: '刚洗完澡，头发还没干',
-    quote: '明天不用早起，所以现在还不困。',
+    now: 'لسّه مخلّصة شوّر، شعرها مبلول',
+    quote: 'بكرة ما في دوام، فما فيني أنام هلّق.',
     avatar:
       'https://images.pexels.com/photos/1462630/pexels-photo-1462630.jpeg?auto=compress&cs=tinysrgb&w=400&h=520&fit=crop',
     live: true,
-    tags: ['同小区', '在线'],
+    tags: ['نفس الحيّ', 'متصلّة'],
   },
   {
     id: 'p2',
-    name: 'Nova',
+    name: 'لمى',
     age: 27,
     meters: 680,
-    now: '在阳台抽烟，没开灯',
-    quote: '楼下的猫又在叫了，你要不要下来看看。',
+    now: 'بالشرفة، دخّان والضو مطفّي',
+    quote: 'القطة تحت عم تصرخ كمان مرة. بتنزل تشوفها؟',
     avatar:
       'https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=400&h=520&fit=crop',
     live: true,
-    tags: ['两站路', '刚上线'],
+    tags: ['عالدوار الثاني', 'لسّه فاتحة'],
   },
   {
     id: 'p3',
-    name: '阿棠',
+    name: 'دانة',
     age: 22,
     meters: 1100,
-    now: '躺着，只开了床头那盏',
-    quote: '我声音比较低，你可能会认错人。',
+    now: 'متمدّدة، مولّعة لمبة السرير بس',
+    quote: 'صوتي واطي كتير، ممكن تحسبني حد ثاني.',
     avatar:
       'https://images.pexels.com/photos/1382731/pexels-photo-1382731.jpeg?auto=compress&cs=tinysrgb&w=400&h=520&fit=crop',
     live: false,
-    tags: ['变声', '3 分钟前'],
+    tags: ['صوت مغيّر', 'قبل ٣ دقايق'],
   },
   {
     id: 'p4',
-    name: '苏眠',
+    name: 'نور',
     age: 29,
     meters: 2400,
-    now: '刚下班，妆还没卸',
-    quote: '今天有点累，但不想睡。陪我坐一会儿。',
+    now: 'رجعت من الشغل، المكياج لسّه',
+    quote: 'تعبت اليوم، بس ما بدي أنام. اقعد معي شوي.',
     avatar:
       'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400&h=520&fit=crop',
     live: true,
-    tags: ['同城', '在线'],
+    tags: ['نفس المدينة', 'متصلّة'],
   },
 ]
 
@@ -433,32 +485,33 @@ export type StepItem = WithId & {
 }
 
 export const DEFAULT_HOW_COPY = {
-  eyebrow: '上手只要三分钟',
-  title: '打开、滑一下、说句话。',
-  sub: '没有复杂的注册流程，手机号验证完就能看。',
-  uploadTitle: '你自己也能发',
-  uploadBody: '拍完直接发，可选「仅附近可见」。30 秒出片，不用会剪辑。',
-  uploadLink: '看看怎么发',
+  eyebrow: 'ثلاث دقائق للبدء',
+  title: 'افتح، مرّر مرة، قل كلمة.',
+  sub: 'بلا تسجيل معقّد. تحقّق من رقمك وتبدأ المشاهدة.',
+  uploadTitle: 'يمكنك النشر أيضًا',
+  uploadBody:
+    'صوّر وانشر مباشرة، واختر «قريبون فقط» إن أردت. ثلاثون ثانية وتنتهي — بلا مونتاج.',
+  uploadLink: 'كيف تنشر',
 }
 
 export const DEFAULT_STEPS: StepItem[] = [
   {
     id: 's1',
     icon: 'mapPin',
-    title: '看到附近',
-    body: '打开就是 3km 内的实时视频，越近越靠前。不用关注、不用加好友。',
+    title: 'شاهد ما حولك',
+    body: 'بمجرد الفتح ترى فيديو حيًا داخل ٣ كم، الأقرب أولًا. بلا متابعة أو صداقة.',
   },
   {
     id: 's2',
     icon: 'messageOff',
-    title: '私聊打个招呼',
-    body: '点开头像就能发消息，文字、语音、照片都行。不想聊了随时关掉。',
+    title: 'سلّم في الخاص',
+    body: 'اضغط على الصورة لترسل رسالة. نص أو صوت أو صورة. وأغلق المحادثة وقتما شئت.',
   },
   {
     id: 's3',
     icon: 'flame',
-    title: '看完就没了',
-    body: '照片和语音对方看完即销毁，不留在对面手机里。想留就自己截图——要快。',
+    title: 'تختفي بعد المشاهدة',
+    body: 'الصور والرسائل الصوتية تُحذف بعد المشاهدة. تريد الاحتفاظ بها؟ التقط لقطة سريعة.',
   },
 ]
 
@@ -467,43 +520,43 @@ export const DEFAULT_STEPS: StepItem[] = [
 export type ChatFeature = { icon: IconName; title: string; body: string }
 
 export const DEFAULT_CHAT_COPY = {
-  eyebrow: '01:24 的私聊',
-  title: '有些话，只在她困之前说得出口。',
-  sub: '真实的私聊长这样。看完即焚，截图要快。',
+  eyebrow: 'دردشة الساعة ٠١:٢٤',
+  title: 'بعض الكلام يُقال فقط قبل أن تنام.',
+  sub: 'هكذا تبدو الدردشة الحقيقية. تختفي بعد القراءة، فاللقطة يجب أن تكون سريعة.',
   features: [
     {
       icon: 'flame',
-      title: '看完即焚',
-      body: '照片和语音点开就开始倒计时，5 秒后从对面手机里消失。',
+      title: 'تختفي بعد القراءة',
+      body: 'الصور والرسائل الصوتية تبدأ العد عند الفتح — وتزول بعد خمس ثوانٍ.',
     },
     {
       icon: 'lock',
-      title: '截图会有提示',
-      body: '她那边会立刻知道你截了屏 —— 所以，要快，也得认。',
+      title: 'لقطات الشاشة تُكشف',
+      body: 'تعرف فورًا إن التقطت لقطة. فكن سريعًا — وتحمّل النتيجة.',
     },
   ] as ChatFeature[],
-  burnBadge: '阅后即焚',
-  inputPlaceholder: '说点什么…',
-  sendLabel: '发送',
-  endNote: '后面的，不在网页上',
+  burnBadge: 'تُحرق بعد القراءة',
+  inputPlaceholder: 'قل شيئًا…',
+  sendLabel: 'إرسال',
+  endNote: 'الباقي ليس على الويب',
 }
 
 export const DEFAULT_CHAT: ChatStory[] = [
   {
     id: 'c1',
-    name: '小满',
-    meta: '320m · 昨天 01:24',
+    name: 'رهف',
+    meta: '320 م · مبارح 01:24',
     avatar:
       'https://images.pexels.com/photos/1462630/pexels-photo-1462630.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&fit=crop',
     lines: [
-      { id: 'l1', from: 'her', text: '你也没睡啊' },
-      { id: 'l2', from: 'you', text: '看到你还在线' },
-      { id: 'l3', from: 'her', text: '我刚洗完澡，头发还是湿的' },
-      { id: 'l4', from: 'her', text: '发你一张？' },
-      { id: 'l5', from: 'you', text: '发吧' },
-      { id: 'l6', from: 'her', text: '图片已查看 · 5 秒后销毁', system: true },
-      { id: 'l7', from: 'her', text: '看到了吗' },
-      { id: 'l8', from: 'her', text: '……说话呀' },
+      { id: 'l1', from: 'her', text: 'إنت كمان سهران؟' },
+      { id: 'l2', from: 'you', text: 'شفتك لسّه متصلّة' },
+      { id: 'l3', from: 'her', text: 'لسّه مخلّصة شوّر، شعري مبلول' },
+      { id: 'l4', from: 'her', text: 'أبعثلك وحدة؟' },
+      { id: 'l5', from: 'you', text: 'ابعثي' },
+      { id: 'l6', from: 'her', text: 'الصورة انفتحت · بتختفي بعد ٥ ثواني', system: true },
+      { id: 'l7', from: 'her', text: 'شفتها؟' },
+      { id: 'l8', from: 'her', text: '…احكي شوي' },
     ],
   },
 ]
@@ -516,97 +569,98 @@ export type FaqItem = WithId & { q: string; a: string }
 export type PermissionRow = { name: string; why: string }
 
 export const DEFAULT_INSTALL_COPY = {
-  eyebrow: '下载与安装',
-  title: '三步装好，',
-  titleHighlight: '不到一分钟。',
-  sub: '应用没有上架应用商店，所以手机会提示「未知来源」。这是安卓对所有侧载安装的正常拦截，不是文件有问题。',
-  permissionsTitle: '只申请这三项权限',
+  eyebrow: 'التحميل والتثبيت',
+  title: 'ثلاث خطوات، ',
+  titleHighlight: 'أقل من دقيقة.',
+  sub: 'التطبيق غير متوفر في المتاجر، لذا سينبّهك الهاتف من «مصادر غير معروفة». هذا تحفّظ أندرويد المعتاد مع كل تثبيت يدوي — وليس عيبًا في الملف.',
+  permissionsTitle: 'ثلاثة أذونات فقط',
   permissions: [
-    { name: '相机', why: '拍摄与上传视频' },
-    { name: '麦克风', why: '录音、语音私聊、AI 变声' },
-    { name: '位置', why: '计算距离，推荐附近内容' },
+    { name: 'الكاميرا', why: 'التصوير ورفع الفيديو' },
+    { name: 'الميكروفون', why: 'التسجيل والصوت ومغيّر الصوت' },
+    { name: 'الموقع', why: 'حساب المسافة ومحتوى الجوار' },
   ] as PermissionRow[],
-  permissionsNote: '通讯录、短信、通话记录 —— 一律不申请。位置可以随时在设置里关掉。',
-  safetyEyebrow: '安全说明',
-  apkTitle: '安装包信息',
-  apkLink: '直链地址（备用）',
-  warningPrefix: '如果手机提示「禁止安装未知应用」，进入',
-  warningStrong: '设置 → 安全 → 安装未知应用',
-  warningSuffix: '，为你正在用的浏览器打开权限，再回来点一次下载即可。',
-  faqTitle: '还有这几个问题',
-  faqHint: '点开就能看到答案',
-  ctaTitle: '都看明白了？那就装上试试',
-  ctaSub: '装好之后打开，你会看到此刻离你最近的那条视频。',
-  footLegal: '用户协议',
-  footPrivacy: '隐私政策',
-  footRules: '内容规范',
-  footAge: '18+',
+  permissionsNote:
+    'جهات الاتصال والرسائل وسجل المكالمات — لا تُطلب أبدًا. ويمكن إيقاف الموقع من الإعدادات في أي وقت.',
+  safetyEyebrow: 'الأمان',
+  apkTitle: 'بيانات الحزمة',
+  apkLink: 'رابط مباشر (احتياطي)',
+  warningPrefix: 'إذا منع هاتفك «تثبيت تطبيقات غير معروفة»، افتح',
+  warningStrong: 'الإعدادات ← الأمان ← تثبيت تطبيقات غير معروفة',
+  warningSuffix: '، واسمح به للمتصفح الذي تستخدمه، ثم عد واضغط تحميل مرة أخرى.',
+  faqTitle: 'بضعة أسئلة أخرى',
+  faqHint: 'اضغط لترى الجواب',
+  ctaTitle: 'واضح؟ جرّبه إذن',
+  ctaSub: 'بعد التثبيت افتحه، وسترى أقرب مقطع إليك الآن.',
+  footLegal: 'الشروط',
+  footPrivacy: 'الخصوصية',
+  footRules: 'القواعد',
+  footAge: '+18',
 }
 
 export const DEFAULT_INSTALL_STEPS: InstallStep[] = [
   {
     id: 'i1',
     no: '01',
-    title: '点「下载」，等 APK 下完',
-    body: '文件约 45 MB，用 Wi-Fi 大概十几秒。下载过程中不要切走页面。',
+    title: 'اضغط «تحميل» وانتظر ملف APK',
+    body: 'حوالي 45 ميجابايت — عشر ثوانٍ على الواي فاي. لا تغادر الصفحة أثناء التحميل.',
   },
   {
     id: 'i2',
     no: '02',
-    title: '允许「未知来源」安装',
-    body: '应用没有上架谷歌商店，手机会弹提示。这是正常现象，点「允许」继续。',
+    title: 'اسمح بالتثبيت من «مصادر غير معروفة»',
+    body: 'التطبيق ليس على متجر جوجل، لذا سيظهر تنبيه. هذا طبيعي — اضغط «سماح».',
   },
   {
     id: 'i3',
     no: '03',
-    title: '点开文件，安装完成',
-    body: '装好后直接打开，允许相机与位置权限，附近的内容才会出现。',
+    title: 'افتح الملف، وانتهى',
+    body: 'افتحه بعد التثبيت واسمح بالكاميرا والموقع، وإلا لن يظهر محتوى الجوار.',
   },
 ]
 
 export const DEFAULT_SAFETY: SafetyPoint[] = [
   {
     id: 'sf1',
-    title: '数字签名校验',
-    body: '每个安装包都经过签名，安装时会自动校验，被改动过的包无法装上。',
+    title: 'توقيع موثّق',
+    body: 'كل حزمة موقّعة ويتم التحقق منها عند التثبيت. الحزم المعدّلة لا تُثبَّت أصلًا.',
   },
   {
     id: 'sf2',
-    title: '无多余权限',
-    body: '只申请相机、麦克风、定位三项。通讯录、短信、通话记录一律不碰。',
+    title: 'لا أذونات زائدة',
+    body: 'الكاميرا والميكروفون والموقع فقط. لا نلمس جهات الاتصال أو الرسائل أو المكالمات.',
   },
   {
     id: 'sf3',
-    title: '不扣费、无自动续订',
-    body: '核心功能免费，没有隐藏订阅，也不会从你的账户里扣任何钱。',
+    title: 'بلا خصم وبلا تجديد',
+    body: 'الوظائف الأساسية مجانية. لا اشتراك خفي، ولن يُخصم منك أي مبلغ.',
   },
 ]
 
 export const DEFAULT_FAQS: FaqItem[] = [
   {
     id: 'f1',
-    q: '安装后打不开或闪退怎么办？',
-    a: '先确认系统是 Android 8.0 以上。如果装过旧版本，请先卸载再重新安装；部分机型需要重启一次才会生效。',
+    q: 'لا يفتح أو يتوقف بعد التثبيت؟',
+    a: 'تأكد أن النظام أندرويد 8.0 أو أحدث. إن كانت نسخة قديمة مثبتة، أزلها ثم أعد التثبيت؛ بعض الأجهزة تحتاج إعادة تشغيل واحدة.',
   },
   {
     id: 'f2',
-    q: '为什么提示「未知来源」，安全吗？',
-    a: '因为没有上架应用商店，系统默认会拦截非商店来源的安装包。这是安卓对所有侧载应用的标准提示，不代表文件有问题。',
+    q: 'لماذا تحذير «مصادر غير معروفة»، هل هو آمن؟',
+    a: 'لأنه لا يُوزَّع عبر متجر تطبيقات، فيمنع أندرويد الحزم خارج المتجر افتراضيًا. هذا سلوك قياسي لأي تثبيت يدوي، ولا يعني أن الملف تالف.',
   },
   {
     id: 'f3',
-    q: '会不会扣费或自动续费？',
-    a: '不会。下载和核心功能都是免费的，页面里没有任何付费入口，也不会绑定支付方式。',
+    q: 'هل سيخصم مني أو يجدّد تلقائيًا؟',
+    a: 'لا. التحميل والوظائف الأساسية مجانية، ولا توجد أي بوابة دفع في الصفحة ولا وسيلة دفع مرتبطة.',
   },
   {
     id: 'f4',
-    q: '苹果手机能用吗？',
-    a: '目前只提供安卓安装包。iOS 版本还在审核流程里，可以先把页面收藏起来。',
+    q: 'هل يعمل على آيفون؟',
+    a: 'أندرويد فقط حاليًا. نسخة iOS ما زالت قيد المراجعة، احفظ الصفحة في المفضلة.',
   },
   {
     id: 'f5',
-    q: '我的位置信息会被存下来吗？',
-    a: '位置只用于计算距离和推荐附近内容，不会显示精确坐标给其他用户，也不会卖给第三方。',
+    q: 'هل يُحفظ موقعي؟',
+    a: 'الموقع يُستخدم فقط لحساب المسافة وترتيب محتوى الجوار. لا تُعرض إحداثياتك الدقيقة لأحد ولا تُباع لطرف ثالث.',
   },
 ]
 
@@ -615,31 +669,31 @@ export const DEFAULT_FAQS: FaqItem[] = [
 export type QuickFix = { q: string; a: string }
 
 export const DEFAULT_MODAL_COPY = {
-  title: '准备下载',
-  sub: '按这三步安全安装到你的安卓手机',
-  signTitle: '签名已校验',
-  signBody: '安装包经过数字签名，安装时系统会自动校验。被篡改过的包装不上。',
-  scanTitle: '可自行复查',
-  scanBody: '下载后用任意手机杀毒 App 再扫一遍，结果随时可查。',
-  unknownTitle: '为什么会提示「未知来源」？',
+  title: 'جاهز للتحميل',
+  sub: 'ثبّته على هاتف أندرويد في ثلاث خطوات آمنة',
+  signTitle: 'التوقيع موثّق',
+  signBody: 'الحزمة موقّعة رقميًا ويتحقق النظام منها أثناء التثبيت. أي تعديل يمنع التثبيت.',
+  scanTitle: 'تحقّق بنفسك',
+  scanBody: 'افحص الملف المُحمّل بأي تطبيق حماية — والنتيجة أمامك.',
+  unknownTitle: 'لماذا «مصادر غير معروفة»؟',
   unknownBody:
-    '因为本应用没有上架应用商店。安卓对所有非商店渠道的安装包都会给这个提示，这是系统层面的标准行为，不代表文件有问题。点「允许」即可继续。',
-  fixesTitle: '装的过程中卡住了？',
+    'لأن التطبيق ليس في متجر تطبيقات. أندرويد يُظهر هذا لكل حزمة من خارج المتجر، وهو سلوك نظام قياسي وليس مشكلة في الملف. اضغط «سماح» للمتابعة.',
+  fixesTitle: 'تعطّل التثبيت؟',
   fixes: [
     {
-      q: '点下载没反应？',
-      a: '部分浏览器会拦截 APK。换用 Chrome 或系统自带浏览器重新打开本页再点一次。',
+      q: 'التحميل لا يستجيب؟',
+      a: 'بعض المتصفحات تحجب ملفات APK. افتح الصفحة في كروم أو متصفح النظام واضغط مرة أخرى.',
     },
     {
-      q: '装完找不到图标？',
-      a: '部分国产系统会把新应用放进「未分类」文件夹，或在桌面下拉搜索应用名称。',
+      q: 'لم تجد الأيقونة بعد التثبيت؟',
+      a: 'بعض الواجهات تضع التطبيقات الجديدة في مجلد «غير مصنّفة». اسحب للأسفل وابحث باسم التطبيق.',
     },
     {
-      q: '提示「解析包错误」？',
-      a: '通常是下载中断导致文件不完整。删除已下载的文件，重新点一次下载即可。',
+      q: 'رسالة «خطأ في تحليل الحزمة»؟',
+      a: 'غالبًا انقطع التحميل فبقي الملف ناقصًا. احذفه وحمّله من جديد.',
     },
   ] as QuickFix[],
-  legal: '继续即表示同意用户协议与隐私政策 · 本应用仅限 18 岁以上',
+  legal: 'بالمتابعة توافق على الشروط وسياسة الخصوصية · للبالغين +18 فقط',
 }
 
 /* ══════════════════════════ 拦截弹窗 ══════════════════════════ */
@@ -649,29 +703,29 @@ export type GateEntry = { title: string; sub: string; cta: string }
 
 export const DEFAULT_GATES: Record<GateKey, GateEntry> = {
   default: {
-    title: '后面的，得进 App 才看得到',
-    sub: '有些画面不适合放在网页上。装好之后，从这里接着往下划。',
-    cta: '装好接着看',
+    title: 'الباقي داخل التطبيق فقط',
+    sub: 'بعض المشاهد لا مكان لها على الويب المفتوح. ثبّته وأكمل التمرير من هنا.',
+    cta: 'ثبّت وأكمل المشاهدة',
   },
   like: {
-    title: '想让她知道你点了',
-    sub: '她会看到是谁。但只在她也装了 App 之后。',
-    cta: '下载去点这个赞',
+    title: 'أخبرها أنك ضغطت',
+    sub: 'ستعرف من فعلها. لكن بعد أن تثبّت هي أيضًا.',
+    cta: 'حمّل لتضغط الإعجاب',
   },
   comment: {
-    title: '评论区得进 App 才能进',
-    sub: '这一条下面有 2,800 多句没说完的话。',
-    cta: '下载去看评论',
+    title: 'التعليقات داخل التطبيق',
+    sub: 'تحت هذا المقطع أكثر من ٢٨٠٠ جملة لم تكتمل.',
+    cta: 'حمّل لتقرأها',
   },
   save: {
-    title: '先存起来，回头再看',
-    sub: '她删掉之前，你还有时间。收藏只在 App 里生效。',
-    cta: '下载去收藏',
+    title: 'احفظه لوقت لاحق',
+    sub: 'ما زال لديك وقت قبل أن تحذفه. الحفظ يعمل داخل التطبيق فقط.',
+    cta: 'حمّل لتحفظه',
   },
   share: {
-    title: '转给那个也没睡的人',
-    sub: '别一个人看。这类的链接，我们只让它活两小时。',
-    cta: '下载去分享',
+    title: 'أرسله للآخر المستيقظ',
+    sub: 'لا تشاهد وحدك. روابط كهذه تعيش هنا ساعتين فقط.',
+    cta: 'حمّل لتشارك',
   },
 }
 
@@ -684,26 +738,26 @@ export type FooterGroup = WithId & {
 
 export const DEFAULT_FOOTER = {
   about:
-    '一个把「附近」放在第一位的短视频社区。看身边正在发生的事，也让身边看见你。',
+    'مجتمع فيديو قصير يضع «الجوار» في المقدمة. شاهد ما يحدث حولك — ودعهم يروْنك.',
   groups: [
     {
       id: 'g1',
-      title: '了解',
+      title: 'تعرّف',
       items: [
-        { id: 'g1a', label: '产品亮点', href: '#highlights' },
-        { id: 'g1b', label: '使用方式', href: '#how' },
-        { id: 'g1c', label: '下载安装', href: '#install' },
+        { id: 'g1a', label: 'المزايا', href: '#highlights' },
+        { id: 'g1b', label: 'كيف يعمل', href: '#how' },
+        { id: 'g1c', label: 'التثبيت', href: '#install' },
       ],
     },
     {
       id: 'g2',
-      title: '支持',
+      title: 'الدعم',
       items: [
-        { id: 'g2a', label: '常见问题', href: '#install' },
-        { id: 'g2b', label: '反馈建议', href: 'mailto:hello@example.com' },
-        { id: 'g2c', label: '内容举报', href: 'mailto:hello@example.com' },
+        { id: 'g2a', label: 'الأسئلة', href: '#install' },
+        { id: 'g2b', label: 'اقتراح', href: 'mailto:hello@example.com' },
+        { id: 'g2c', label: 'إبلاغ عن محتوى', href: 'mailto:hello@example.com' },
       ],
     },
   ] as FooterGroup[],
-  dockNote: '附近视频 · 完全免费',
+  dockNote: 'فيديو الجوار · مجاني دائمًا',
 }

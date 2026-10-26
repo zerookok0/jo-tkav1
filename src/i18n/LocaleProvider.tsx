@@ -23,10 +23,10 @@ import {
  *
  * 结构很简单，但层次很关键：
  *
- *   ConfigProvider（中文主库）
+ *   ConfigProvider（阿拉伯语主库）
  *     └─ LocaleProvider  ← 在这里再包一层配置，换成「当前语言」
  *          └─ 页面组件   ← 照旧 useConfig()，拿到的就是翻译后的内容
- *     └─ 控制台          ← 留在这层外面，改的永远是中文母版
+ *     └─ 控制台          ← 留在这层外面，改的永远是阿拉伯语母版
  *
  * 这样做的好处：页面组件一行都不用改，
  * 而控制台不会因为切到英文就把英文存成母版。
@@ -43,7 +43,7 @@ const persist = (locale: Locale) => {
   }
 }
 
-/** 首次进入时的语言：?lang=xx → 本机记住的 → 浏览器语言 → 中文 */
+/** 首次进入时的语言：?lang=xx → 本机记住的 → 浏览器语言 → 阿拉伯语 */
 function initialLocale(): Locale {
   if (typeof window === 'undefined') return FALLBACK_LOCALE
 
@@ -63,7 +63,7 @@ function initialLocale(): Locale {
 type LocaleStore = {
   locale: Locale
   setLocale: (next: Locale) => void
-  /** 中文主库（控制台编辑的那份） */
+  /** 阿拉伯语主库（控制台编辑的那份） */
   base: SiteConfig
   /** 本地化后的配置 */
   config: SiteConfig
@@ -104,7 +104,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
    * 关键一步：给页面看的配置换成翻译版。
    *
    * 增删改的函数（set / update / importJson…）原样保留 ——
-   * 它们写进 localStorage 的永远是中文主库，
+   * 它们写进 localStorage 的永远是阿拉伯语主库，
    * 所以你在英文界面下改内容，母版也不会被污染。
    */
   const innerStore = useMemo<Store>(

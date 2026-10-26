@@ -492,6 +492,35 @@ export function NearbyEditor() {
         </div>
       </Section>
 
+      <Section title="头像锁定" desc="网页上一律模糊，下载 App 才能看清" defaultOpen onReset={() => resetSection('nearbyCopy')}>
+        <Grid cols={2}>
+          <Field label="锁定标题">
+            <TextInput value={copy.blurTitle} onChange={(v) => set('nearbyCopy.blurTitle', v)} />
+          </Field>
+          <Field label="解锁按钮">
+            <TextInput value={copy.blurCta} onChange={(v) => set('nearbyCopy.blurCta', v)} />
+          </Field>
+          <Field label="模糊强度（px）" hint="0 = 关闭模糊，恢复原图" wide>
+            <NumberInput
+              value={copy.blurPx}
+              step={2}
+              onChange={(v) => set('nearbyCopy.blurPx', v)}
+            />
+          </Field>
+          <Field label="锁定说明" wide>
+            <TextArea
+              value={copy.blurBody}
+              onChange={(v) => set('nearbyCopy.blurBody', v)}
+              rows={2}
+            />
+          </Field>
+        </Grid>
+        <p className="mt-2 rounded-lg border border-copper/20 bg-copper/[0.06] px-2.5 py-2 text-[10px] leading-relaxed text-cream/45">
+          调一调这个数值：<strong className="font-semibold text-cream/70">太轻等于没锁，太重就是一块色块</strong>。
+          推荐 18–30 —— 看得出是个人，但认不出是谁。
+        </p>
+      </Section>
+
       <Section title="真人卡片" desc="每张卡：距离 + 此刻 + 一句原话" defaultOpen onReset={() => resetSection('people')}>
         <div className="grid gap-2">
           {config.people.map((p, i) => (

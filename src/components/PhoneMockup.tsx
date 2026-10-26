@@ -256,6 +256,19 @@ export function PhoneMockup({ onGate }: Props) {
         </span>
         {previewNote}
       </p>
+
+      {/*
+        画质说明。
+        位置：紧跟预览说明，属于「解释」层级，不抢主视觉。
+        归因：说「网页压缩 / App 原画」，这是技术差异；
+              写成「网页很慢」等于替自己贴差评。
+        留空则不渲染 —— 想临时去掉不用改代码。
+      */}
+      {ui.previewQualityNote && (
+        <p className="mt-1.5 text-center text-[10.5px] leading-relaxed text-white/25">
+          {ui.previewQualityNote}
+        </p>
+      )}
     </div>
   )
 }
@@ -316,6 +329,29 @@ function FeedCard({
   const videoRef = useRef<HTMLVideoElement | null>(null)
   /** 只负责「停在中间某帧」当封面的那个 video */
   const coverRef = useRef<HTMLVideoElement | null>(null)
+  /**
+   * 视频源是不是坏了（404 / 格式不支持）。
+   *
+   * 为什么要显式记这个状态：
+   * <video> 加载失败不会自动回退，它会停在白屏或首帧，
+   * 看起来跟「还在加载」一模一样 —— 用户会一直等，其实永远等不到。
+   * 记下来才能明确告诉对方「这条源失效了」。
+   */
+  const [broken, setBroken] = useState(false)
+  /**
+   * 视频是不是还没到「能看」的那一步。
+   *
+   * 为什么必须有这个状态：
+   * 用户打开页面，封面图出来了，但真视频还在下 ——
+   * 屏幕上只是一张不动的图，他会以为页面卡死了，3 秒内就走了。
+   * 明确写「视频正在加载中」，他才愿意多等这一会。
+   *
+   * 判定标准用 readyState >= 2（HAVE_CURRENT_DATA，已经能出画面），
+   * 不是 loadedmetadata —— 元数据到了但画面还没解码，用户看到的还是黑的。
+   */
+  const [loading, setLoading] = useState(false)
+  /** 等太久要换一句更诚实的话，别一直假装马上就绪 */
+  const [slow, setSlow] = useState(false)
   const ui = useConfig().config.ui
   const poster = safeImageUrl(item.poster)
   const avatar = safeImageUrl(item.avatar)
@@ -349,18 +385,78 @@ function FeedCard({
     return () => el.removeEventListener('loadedmetadata', seek)
   }, [item.src, coverAt, poster, near])
 
-  /** 只让当前这条播放 */
+  /**
+   * 只让当前这条播放；同时把「能不能看」这件事记下来。
+   *
+   * 加载中的判定不看 <video> 有没有挂上，而看 readyState ——
+   * 元素挂上去不等于有画面，网络慢的时候它会停在那里很久。
+   *
+   * 依赖里必须带上 near 和 src：
+   * video 元素是「进入视口后才挂载」的，如果只监听 active，
+   * 元素挂上的那一刻这个 effect 不会重跑，视频就永远停在封面 ——
+   * 看起来就像「一直在加载」。
+   */
   useEffect(() => {
     const el = videoRef.current
     if (!el) return
+
+    /** readyState >= 2（HAVE_CURRENT_DATA）才算真的能出画面 */
+    const playable = () => el.readyState >= 2
+    const sync = () => setLoading(!playable())
+
+    const onError = () => {
+      setBroken(true)
+      setLoading(false)
+    }
+    const onReady = () => {
+      setBroken(false)
+      setLoading(false)
+    }
+    /** 卡顿：网络慢或解码跟不上，画面停住 → 重新告诉用户还在加载 */
+    const onWaiting = () => setLoading(!playable())
+
+    el.addEventListener('error', onError)
+    el.addEventListener('loadeddata', onReady)
+    el.addEventListener('canplay', onReady)
+    el.addEventListener('playing', onReady)
+    el.addEventListener('waiting', onWaiting)
+    el.addEventListener('stalled', onWaiting)
+
     if (active) {
+      // 已经缓冲好（比如来回滑回来）就不要闪一下加载提示
+      sync()
       const p = el.play()
       if (p && typeof p.catch === 'function') p.catch(() => {})
     } else {
       el.pause()
       el.currentTime = 0
+      setLoading(false)
     }
-  }, [active])
+
+    return () => {
+      el.removeEventListener('error', onError)
+      el.removeEventListener('loadeddata', onReady)
+      el.removeEventListener('canplay', onReady)
+      el.removeEventListener('playing', onReady)
+      el.removeEventListener('waiting', onWaiting)
+      el.removeEventListener('stalled', onWaiting)
+    }
+  }, [active, near, item.src])
+
+  /**
+   * 超过 6 秒还没起来，就换一句更诚实的话。
+   *
+   * 一直写「正在加载」而画面迟迟不来，用户会觉得被糊弄；
+   * 老实说「网络有点慢」，他反而愿意再等一下。
+   */
+  useEffect(() => {
+    if (!loading) {
+      setSlow(false)
+      return
+    }
+    const t = window.setTimeout(() => setSlow(true), 6000)
+    return () => window.clearTimeout(t)
+  }, [loading])
 
   return (
     <article className="snap-start-always relative h-full w-full overflow-hidden bg-[#0c0c0e]">
@@ -416,6 +512,49 @@ function FeedCard({
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-black/85" />
       <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/85 to-transparent" />
+
+      {/*
+        加载中的提示。
+        层级放在渐变之上、操作栏之下：先看见「在转」，再看文字，
+        最后才是点赞评论 —— 顺序对了，就不会以为页面卡住。
+
+        为什么用 readyState 而不是假进度条：
+        假进度条走完而画面还没来，比什么都不显示更让人想关掉页面。
+        这里只在真的能出画面时消失。
+      */}
+      {loading && !broken && item.src && (
+        <div
+          className="pointer-events-none absolute inset-0 z-10 grid place-items-center px-6"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="flex flex-col items-center gap-2.5">
+            <span className="relative grid h-11 w-11 place-items-center">
+              {/* 只留一道亮弧：比整圈实心更像「在转」 */}
+              <span className="absolute inset-0 animate-spin rounded-full border-2 border-white/20 border-t-white/85" />
+              <Music2 className="h-4 w-4 text-white/70" />
+            </span>
+            <p className="text-[12.5px] font-medium text-white/85">{ui.videoLoading}</p>
+            <p className="text-center text-[10.5px] leading-relaxed text-white/40">
+              {slow ? ui.videoLoadingSlow : ui.videoLoadingHint}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/*
+        源失效的提示。
+        没有这个，用户看到的是封面 + 不动的画面，会以为网慢。
+        明确写出来，才知道该去换链接。
+      */}
+      {broken && item.src && (
+        <div className="absolute inset-x-3 top-1/2 z-20 -translate-y-1/2 rounded-xl border border-amber-400/30 bg-black/70 px-3 py-2.5 text-center backdrop-blur">
+          <p className="text-[11.5px] font-semibold text-amber-200">{ui.videoBrokenTitle}</p>
+          <p className="mt-1 text-[10px] leading-relaxed text-amber-100/60">
+            {ui.videoBrokenBody}
+          </p>
+        </div>
+      )}
 
       {item.badge && (
         <div className="absolute start-4 top-[76px] z-20 inline-flex items-center gap-1 rounded-full bg-wine/90 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-white shadow-glow">
